@@ -1,22 +1,23 @@
 using System;
-using System.Collections.Generic;
-using JetBrains.Annotations;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class ChainUnit : MonoBehaviour
 {
-    
-    public ChainUnit PreviousUnit;
-    
-    private Rigidbody2D _rigidbody;
+    private LineRenderer _lineRenderer;
+
+    private ChainManager _chainManager;
     private void Start()
     {
-        _rigidbody = GetComponent<Rigidbody2D>();
+        _chainManager = GetComponent<ChainManager>();
+        _lineRenderer = gameObject.AddComponent<LineRenderer>();
+        _lineRenderer.startWidth = 0.01f;
     }
 
-    public void FixedUpdate()
+    private void Update()
     {
-        
+        var handPositions = _chainManager.GetPrevLinkHandPositions();
+        _lineRenderer.SetPosition(0, _chainManager.LeftHand.position);
+        _lineRenderer.SetPosition(1, handPositions.RightHand);
     }
 }

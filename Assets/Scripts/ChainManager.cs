@@ -3,6 +3,12 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 
+public struct HandPositions
+{
+    public Vector2 LeftHand;
+    public Vector2 RightHand;
+}
+
 public class ChainManager : MonoBehaviour
 {
     public Transform RightHand;
@@ -12,6 +18,8 @@ public class ChainManager : MonoBehaviour
     public bool IsChained;
 
     public List<ChainManager> ChainedUnits;
+    private ChainManager _previousLink;
+    private HandPositions _prevLinkHandPositions;
     
     private void Start()
     {
@@ -21,6 +29,17 @@ public class ChainManager : MonoBehaviour
             ChainedUnits.Add(GetComponent<ChainManager>());
         }
     }
+
+    private void Update()
+    {
+        if (!_previousLink)
+        {
+            return;
+        }
+        _prevLinkHandPositions.LeftHand = _previousLink.LeftHand.position;
+        _prevLinkHandPositions.RightHand = _previousLink.RightHand.position;
+    }
+
     public void OnCollisionEnter2D(Collision2D other)
     {
         if (!IsHead)
@@ -28,7 +47,7 @@ public class ChainManager : MonoBehaviour
             return;
         }
 ;
-        var endChainManager = ChainedUnits[^1];
+        var finalLink = ChainedUnits[^1];
         
         var otherChainManager = other.gameObject.GetComponent<ChainManager>();
         if (otherChainManager.IsChained)
@@ -36,13 +55,21 @@ public class ChainManager : MonoBehaviour
             return;
         }
 
+        otherChainManager._previousLink = finalLink;
+
         otherChainManager.IsChained = true;
         ChainedUnits.Add(otherChainManager);
+        other.gameObject.AddComponent<ChainUnit>();
 
         var springJoint = other.gameObject.AddComponent<SpringJoint2D>();
-        springJoint.connectedBody = endChainManager.GetComponent<Rigidbody2D>();
+        springJoint.connectedBody = finalLink.GetComponent<Rigidbody2D>();
         springJoint.frequency = 3;
         springJoint.autoConfigureDistance = false;
         springJoint.distance = 0.2f;
+    }
+
+    public HandPositions GetPrevLinkHandPositions()
+    {
+        return _prevLinkHandPositions;
     }
 }
