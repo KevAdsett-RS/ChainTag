@@ -1,0 +1,156 @@
+using System.Collections.Generic;
+using Input;
+using PurrNet;
+using UnityEngine;
+using Random = UnityEngine.Random;
+
+public class TestNetworkScript : NetworkIdentity
+{
+    
+    private readonly SyncVar<Color> _color = new();
+
+    private readonly SyncVar<string> _name = new();
+
+        
+    private List<string> _potentialNames = new() {"Oliver",
+        "George",
+        "Noah",
+        "Arthur",
+        "Harry",
+        "Leo",
+        "Muhammad",
+        "Jack",
+        "Charlie",
+        "Oscar",
+        "Jacob",
+        "Henry",
+        "Thomas",
+        "Freddie",
+        "Alfie",
+        "Theo",
+        "William",
+        "Theodore",
+        "Archie",
+        "Joshua",
+        "Alexander",
+        "James",
+        "Isaac",
+        "Edward",
+        "Lucas",
+        "Tommy",
+        "Finley",
+        "Max",
+        "Logan",
+        "Ethan",
+        "Mohammed",
+        "Teddy",
+        "Benjamin",
+        "Arlo",
+        "Joseph",
+        "Sebastian",
+        "Harrison",
+        "Elijah",
+        "Adam",
+        "Daniel",
+        "Samuel",
+        "Louie",
+        "Mason",
+        "Reuben",
+        "Albie",
+        "Rory",
+        "Jaxon",
+        "Hugo",
+        "Luca",
+        "Zachary",
+        "Reggie",
+        "Hunter",
+        "Louis",
+        "Dylan",
+        "Albert",
+        "David",
+        "Jude",
+        "Frankie",
+        "Roman",
+        "Ezra",
+        "Toby",
+        "Riley",
+        "Carter",
+        "Ronnie",
+        "Frederick",
+        "Gabriel",
+        "Stanley",
+        "Bobby",
+        "Jesse",
+        "Michael",
+        "Elliot",
+        "Grayson",
+        "Mohammad",
+        "Liam",
+        "Jenson",
+        "Ellis",
+        "Harley",
+        "Harvey",
+        "Jayden",
+        "Jake",
+        "Ralph",
+        "Rowan",
+        "Elliott",
+        "Jasper",
+        "Ollie",
+        "Charles",
+        "Finn",
+        "Felix",
+        "Caleb",
+        "Chester",
+        "Jackson",
+        "Hudson",
+        "Leon",
+        "Ibrahim",
+        "Ryan",
+        "Blake",
+        "Alfred",
+        "Oakley",
+        "Matthew",
+        "Luke",};
+    private void Awake()
+    {
+        _color.onChanged += OnColorChanged;
+        _name.onChanged += OnNameChanged;
+    }
+
+    protected override void OnDestroy()
+    {
+        _color.onChanged -= OnColorChanged;
+        _name.onChanged -= OnNameChanged;
+        base.OnDestroy();
+    }
+
+    protected override void OnSpawned()
+    {
+        if (isOwner)
+        {
+            gameObject.AddComponent<PlayerInputHandler>();
+            gameObject.GetComponent<PlayerMovement>().enabled = true;
+        }
+        
+        if (!isServer)
+        {
+            return;
+        }
+
+        _color.value = Random.ColorHSV(0, 1, 1, 1, 1, 1);
+        _name.value = _potentialNames[Random.Range(0, _potentialNames.Count)];
+        
+    }
+
+    private void OnColorChanged(Color newValue)
+    {
+        GetComponent<SpriteRenderer>().color = _color;
+    }
+
+    private void OnNameChanged(string newValue)
+    {
+        name = _name.value;
+    }
+
+}

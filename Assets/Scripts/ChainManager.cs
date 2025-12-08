@@ -1,75 +1,52 @@
-using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
+using PurrNet;
 using UnityEngine;
 
-public struct HandPositions
+public class ChainManager : NetworkIdentity
 {
-    public Vector2 LeftHand;
-    public Vector2 RightHand;
-}
-
-public class ChainManager : MonoBehaviour
-{
-    public Transform RightHand;
-    public Transform LeftHand;
     
-    public bool IsHead;
-    public bool IsChained;
+    private readonly SyncVar<bool> _isHead = new();
+    private readonly SyncVar<bool> _isChained = new();
 
-    public List<ChainManager> ChainedUnits;
-    private ChainManager _previousLink;
-    private HandPositions _prevLinkHandPositions;
+    private readonly List<ChainUnit> _chainedUnits = new();
     
-    private void Start()
+    protected override void OnSpawned()
     {
-        ChainedUnits = new List<ChainManager>();
-        if (IsHead)
-        {
-            ChainedUnits.Add(GetComponent<ChainManager>());
-        }
-    }
-
-    private void Update()
-    {
-        if (!_previousLink)
+        if (!isServer)
         {
             return;
         }
-        _prevLinkHandPositions.LeftHand = _previousLink.LeftHand.position;
-        _prevLinkHandPositions.RightHand = _previousLink.RightHand.position;
+
+        if (isOwner)
+        {
+            _isHead.value = true;
+        }
+        
+        if (_isHead)
+        {
+            _chainedUnits.Add(GetComponent<ChainUnit>());
+        }
     }
 
     public void OnCollisionEnter2D(Collision2D other)
     {
-        if (!IsHead)
+        if (!isServer || !_isHead.value)
         {
             return;
         }
-;
-        var finalLink = ChainedUnits[^1];
+        
+        var finalLink = _chainedUnits[^1];
         
         var otherChainManager = other.gameObject.GetComponent<ChainManager>();
-        if (otherChainManager.IsChained)
+        if (otherChainManager._isChained.value)
         {
             return;
         }
 
-        otherChainManager._previousLink = finalLink;
+        otherChainManager._isChained.value = true;
+        var chainUnit = other.gameObject.GetComponent<ChainUnit>();
+        chainUnit.SetLinkedUnit(finalLink);
 
-        otherChainManager.IsChained = true;
-        ChainedUnits.Add(otherChainManager);
-        other.gameObject.AddComponent<ChainUnit>();
-
-        var springJoint = other.gameObject.AddComponent<SpringJoint2D>();
-        springJoint.connectedBody = finalLink.GetComponent<Rigidbody2D>();
-        springJoint.frequency = 3;
-        springJoint.autoConfigureDistance = false;
-        springJoint.distance = 0.2f;
-    }
-
-    public HandPositions GetPrevLinkHandPositions()
-    {
-        return _prevLinkHandPositions;
+        _chainedUnits.Add(chainUnit);
     }
 }

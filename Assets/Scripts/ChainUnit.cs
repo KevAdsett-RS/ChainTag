@@ -1,23 +1,53 @@
-using System;
+using Input;
+using PurrNet;
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody2D))]
-public class ChainUnit : MonoBehaviour
+[RequireComponent(typeof(LineRenderer)), RequireComponent(typeof(ChainManager))]
+public class ChainUnit : NetworkIdentity
 {
+    public Transform RightHand;
+    public Transform LeftHand;
+    
     private LineRenderer _lineRenderer;
 
-    private ChainManager _chainManager;
-    private void Start()
+    [SerializeField]
+    private ChainUnit _linkedUnit;
+
+    [ServerOnly]
+    public void SetLinkedUnit(ChainUnit unit)
     {
-        _chainManager = GetComponent<ChainManager>();
-        _lineRenderer = gameObject.AddComponent<LineRenderer>();
-        _lineRenderer.startWidth = 0.01f;
+        Debug.Log($"Server call to link {name} to {unit.name}");
+        SyncLinkedUnit(unit);
+    }
+
+    [ObserversRpc]
+    private void SyncLinkedUnit(ChainUnit unit)
+    {
+        Debug.Log($"{name} is now linked to {unit.name}");
+        
+        _linkedUnit = unit;
+
+        var springJoint = gameObject.GetComponent<SpringJoint2D>();
+        springJoint.connectedBody = unit.GetComponent<Rigidbody2D>();
+        springJoint.enabled = true;
+        _lineRenderer.enabled = true;
+    }
+
+    protected override void OnSpawned()
+    {
+        _lineRenderer = gameObject.GetComponent<LineRenderer>();
     }
 
     private void Update()
     {
-        var handPositions = _chainManager.GetPrevLinkHandPositions();
-        _lineRenderer.SetPosition(0, _chainManager.LeftHand.position);
-        _lineRenderer.SetPosition(1, handPositions.RightHand);
+        Debug.Log($"Updating {name}");
+        if (!_linkedUnit)
+        {
+            Debug.Log($"{name} has no linked unit");
+            return;
+        }
+
+        _lineRenderer.SetPosition(0,_linkedUnit.LeftHand.position);
+        _lineRenderer.SetPosition(1, RightHand.position);
     }
 }
