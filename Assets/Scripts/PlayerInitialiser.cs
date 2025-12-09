@@ -4,14 +4,9 @@ using PurrNet;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-public class TestNetworkScript : NetworkIdentity
+public class PlayerInitialiser : NetworkIdentity
 {
-    
-    private readonly SyncVar<Color> _color = new();
-
     private readonly SyncVar<string> _name = new();
-
-        
     private List<string> _potentialNames = new() {"Oliver",
         "George",
         "Noah",
@@ -114,13 +109,11 @@ public class TestNetworkScript : NetworkIdentity
         "Luke",};
     private void Awake()
     {
-        _color.onChanged += OnColorChanged;
         _name.onChanged += OnNameChanged;
     }
 
     protected override void OnDestroy()
     {
-        _color.onChanged -= OnColorChanged;
         _name.onChanged -= OnNameChanged;
         base.OnDestroy();
     }
@@ -138,14 +131,7 @@ public class TestNetworkScript : NetworkIdentity
             return;
         }
 
-        _color.value = Random.ColorHSV(0, 1, 1, 1, 1, 1);
         _name.value = _potentialNames[Random.Range(0, _potentialNames.Count)];
-        
-    }
-
-    private void OnColorChanged(Color newValue)
-    {
-        GetComponent<SpriteRenderer>().color = _color;
     }
 
     private void OnNameChanged(string newValue)

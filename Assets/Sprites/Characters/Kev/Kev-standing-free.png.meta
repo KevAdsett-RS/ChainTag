@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 41182b72ca904344e884c711c5a2558b
+guid: 7c64b49bacbf1f8498a90dfa74e1a672
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 2199868869539093103
-    second: Kev-standing_0
+      213: 3436802266908225205
+    second: Kev-standing-free_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -46,10 +46,10 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
-  alignment: 7
+  alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
   spritePixelsToUnits: 32
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
@@ -75,7 +75,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 0
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -100,7 +100,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Kev-standing_0
+      name: Kev-standing-free_0
       rect:
         serializedVersion: 2
         x: 10
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: f6a5159d411878e10800000000000000
-      internalID: 2199868869539093103
+      spriteID: 5be625ae379f1bf20800000000000000
+      internalID: 3436802266908225205
       vertices: []
       indices: 
       edges: []
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Kev-standing_0: 2199868869539093103
+      Kev-standing-free_0: 3436802266908225205
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

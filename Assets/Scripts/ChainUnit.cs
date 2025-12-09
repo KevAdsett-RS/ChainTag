@@ -11,21 +11,24 @@ public class ChainUnit : NetworkIdentity
     private LineRenderer _lineRenderer;
 
     [SerializeField]
-    private ChainUnit _linkedUnit;
+    private SyncVar<ChainUnit> _linkedUnit;
 
     [ServerOnly]
     public void SetLinkedUnit(ChainUnit unit)
     {
         Debug.Log($"Server call to link {name} to {unit.name}");
-        SyncLinkedUnit(unit);
+        _linkedUnit.value = unit;
     }
 
-    [ObserversRpc]
     private void SyncLinkedUnit(ChainUnit unit)
     {
+        if (unit == null)
+        {
+            return;
+        }
         Debug.Log($"{name} is now linked to {unit.name}");
         
-        _linkedUnit = unit;
+        _linkedUnit.value = unit;
 
         var springJoint = gameObject.GetComponent<SpringJoint2D>();
         springJoint.connectedBody = unit.GetComponent<Rigidbody2D>();
@@ -35,28 +38,29 @@ public class ChainUnit : NetworkIdentity
 
     protected override void OnSpawned()
     {
+        Debug.Log($"{name} spawned!");
+        
         _lineRenderer = gameObject.GetComponent<LineRenderer>();
+        _linkedUnit.onChanged += SyncLinkedUnit;
+        SyncLinkedUnit(_linkedUnit.value);
+    }
+
+    protected override void OnDestroy()
+    {
+        _linkedUnit.onChanged -= SyncLinkedUnit;
+        base.OnDestroy();
     }
 
     private void Update()
     {
-        if (!_linkedUnit)
+        if (!_linkedUnit.value)
         {
             return;
         }
 
-        var distToLinkedLeft = Vector2.Distance(_linkedUnit.LeftHand.position, RightHand.position);
-        var distToLinkedRight = Vector2.Distance(_linkedUnit.RightHand.position, LeftHand.position);
-        if (distToLinkedRight > distToLinkedLeft)
-        {
-            _lineRenderer.SetPosition(0,_linkedUnit.LeftHand.position);
-            _lineRenderer.SetPosition(1, RightHand.position);
-        }
-        else
-        {
-            _lineRenderer.SetPosition(0,_linkedUnit.RightHand.position);
-            _lineRenderer.SetPosition(1, LeftHand.position);
-        }
+        // Debug.Log($"Updating {name}'s linked to {_linkedUnit.value.name}");
 
+        _lineRenderer.SetPosition(0,_linkedUnit.value.LeftHand.position);
+        _lineRenderer.SetPosition(1, RightHand.position);
     }
 }

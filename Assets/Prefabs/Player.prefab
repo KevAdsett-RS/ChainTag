@@ -235,7 +235,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 738d0ab9a3e714b4d92b68783399b2dc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Speed: 2
+  Speed: 4
 --- !u!114 &-3310377305785862381
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -257,6 +257,16 @@ MonoBehaviour:
   _directChildren: []
   _networkRules: {fileID: 0}
   _visitiblityRules: {fileID: 0}
+  FreeSprite: {fileID: 21300000, guid: c000ee88ae7ec554783d90462ddb7948, type: 3}
+  ChainedSprite: {fileID: 21300000, guid: b6a028b9c5204194688ec114c7ff40ec, type: 3}
+  _isHead:
+    _value: 0
+    _ownerAuth: 0
+    _sendIntervalInSeconds: 0
+  _isChained:
+    _value: 0
+    _ownerAuth: 0
+    _sendIntervalInSeconds: 0
 --- !u!114 &5454829974437661164
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -353,7 +363,10 @@ MonoBehaviour:
   _visitiblityRules: {fileID: 0}
   RightHand: {fileID: 2282719305371714900}
   LeftHand: {fileID: 3692073789898918098}
-  _linkedUnit: {fileID: 0}
+  _linkedUnit:
+    _value: {fileID: 0}
+    _ownerAuth: 0
+    _sendIntervalInSeconds: 0
 --- !u!120 &4821307595127775039
 LineRenderer:
   serializedVersion: 2
