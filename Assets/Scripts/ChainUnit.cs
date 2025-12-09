@@ -40,14 +40,23 @@ public class ChainUnit : NetworkIdentity
 
     private void Update()
     {
-        Debug.Log($"Updating {name}");
         if (!_linkedUnit)
         {
-            Debug.Log($"{name} has no linked unit");
             return;
         }
 
-        _lineRenderer.SetPosition(0,_linkedUnit.LeftHand.position);
-        _lineRenderer.SetPosition(1, RightHand.position);
+        var distToLinkedLeft = Vector2.Distance(_linkedUnit.LeftHand.position, RightHand.position);
+        var distToLinkedRight = Vector2.Distance(_linkedUnit.RightHand.position, LeftHand.position);
+        if (distToLinkedRight > distToLinkedLeft)
+        {
+            _lineRenderer.SetPosition(0,_linkedUnit.LeftHand.position);
+            _lineRenderer.SetPosition(1, RightHand.position);
+        }
+        else
+        {
+            _lineRenderer.SetPosition(0,_linkedUnit.RightHand.position);
+            _lineRenderer.SetPosition(1, LeftHand.position);
+        }
+
     }
 }
