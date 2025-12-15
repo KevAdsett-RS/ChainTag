@@ -75,7 +75,6 @@ public class ChainManager : NetworkIdentity
 
     private void OnIsChainedChanged(bool isChained)
     {
-        Debug.Log($"{name}'s IsChained value changed...");
         GetComponent<SpriteRenderer>().sprite = isChained ? ChainedSprite : FreeSprite;
     }
 }
