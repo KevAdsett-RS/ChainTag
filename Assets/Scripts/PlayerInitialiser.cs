@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Input;
 using Nakama;
@@ -204,11 +205,18 @@ public class PlayerInitialiser : NetworkIdentity
     }
 
     [ServerOnly]
-    private void AssignNewUsername(ISession nakamaSession)
+    private async void AssignNewUsername(ISession nakamaSession)
     {
-        var newUsername = _potentialNames[Random.Range(0, _potentialNames.Count)];
-        Debug.Log($"{GetContext()} PlayerInitialiser::InitialiseDisplayName: generating new name: {newUsername}");
-        _name.value = newUsername;
-        _nakamaClient.SetDisplayname(nakamaSession, newUsername);
+        try
+        {
+            var newUsername = _potentialNames[Random.Range(0, _potentialNames.Count)];
+            Debug.Log($"{GetContext()} PlayerInitialiser::InitialiseDisplayName: generating new name: {newUsername}");
+            _name.value = newUsername;
+            await _nakamaClient.SetDisplayname(nakamaSession, newUsername);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Something went wrong setting display name: {e.Message}");
+        }
     }
 }
