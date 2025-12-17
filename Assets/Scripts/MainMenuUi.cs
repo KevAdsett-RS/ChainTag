@@ -1,4 +1,3 @@
-using StateMachine;
 using TMPro;
 using UnityEngine;
 
@@ -6,15 +5,36 @@ public class MainMenuUi : MonoBehaviour
 {
     public TMP_InputField Input;
 
-    public void OnPlayButtonPressed()
+    private void Start()
     {
-        GameStateMachine stateMachine = GameStateMachine.Instance;
-        if (stateMachine == null)
-        {
-            Debug.LogError("MainMenuUi::OnPlayButtonPressed: No StateMachine set");
-            return;
-        }
-        var mainMenuState = stateMachine.CurrentState as MainMenuState;
-        mainMenuState?.OnPlay(Input.text);
+        Debug.Log("MainMenuUi::Start");
+        Input.onEndEdit.AddListener(OnInputEdited);
+    }
+
+    private void OnDestroy()
+    {
+        Input?.onEndEdit.RemoveListener(OnInputEdited);
+    }
+
+    public void OnJoinButtonPressed()
+    {
+        Events.MainMenuEvents.OnJoinButtonPressed?.Invoke();
+    }
+    public void OnHostButtonPressed()
+    {
+        Events.MainMenuEvents.OnHostButtonPressed?.Invoke();
+    }
+
+    public void SetDisplayName(string displayName)
+    {
+        Debug.Log($"MainMenuUi::SetDisplayName: {displayName}");
+        Input.text = displayName;
+        Events.MainMenuEvents.OnUsernameEdited?.Invoke(Input.text);
+    }
+
+    private void OnInputEdited(string newValue)
+    {
+        Events.MainMenuEvents.OnUsernameEdited?.Invoke(Input.text);
+        
     }
 }
