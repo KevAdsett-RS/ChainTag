@@ -2,7 +2,7 @@ using Input;
 using PurrNet;
 using UnityEngine;
 
-[RequireComponent(typeof(LineRenderer)), RequireComponent(typeof(ChainManager))]
+[RequireComponent(typeof(LineRenderer))]
 public class ChainUnit : NetworkIdentity
 {
     public Transform RightHand;
@@ -57,8 +57,6 @@ public class ChainUnit : NetworkIdentity
         {
             return;
         }
-
-        // Debug.Log($"Updating {name}'s linked to {_linkedUnit.value.name}");
 
         _lineRenderer.SetPosition(0,_linkedUnit.value.LeftHand.position);
         _lineRenderer.SetPosition(1, RightHand.position);

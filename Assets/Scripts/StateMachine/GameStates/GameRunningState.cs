@@ -36,14 +36,15 @@ namespace StateMachine.GameStates
         private void OnSceneLoaded(SceneID sceneId, bool asServer)
         {
             Debug.Log($"GameRunningState::OnSceneLoaded: {SceneName}");
-            StartGame();
+            StartGame(_networkManager.isHost);
         }
 
-        private void StartGame()
+        private void StartGame(bool asHost)
         {
             Events.GameEvents.StartGame?.Invoke(Owner.UniqueDeviceId,
                 Owner.GetStatePacket<PlayerID>("localPlayerId"),
-                Owner.GetStatePacket<string>("displayName"));
+                Owner.GetStatePacket<string>("displayName"),
+                asHost);
         }
     }
 }

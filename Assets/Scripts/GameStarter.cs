@@ -12,6 +12,7 @@ public class GameStarter : NetworkIdentity
     private PlayerID _localPlayerId;
     private string _displayName;
     private NetworkManager _networkManager;
+    private bool _asHost;
 
     private void Start()
     {
@@ -27,13 +28,14 @@ public class GameStarter : NetworkIdentity
         base.OnDestroy();
     }
 
-    public void StartGame(string uniqueDeviceId, PlayerID localPlayerId, string displayName)
+    public void StartGame(string uniqueDeviceId, PlayerID localPlayerId, string displayName, bool asHost)
     {
         Debug.Log("GameStarter::StartGame");
      
         _uniqueDeviceId = uniqueDeviceId;
         _localPlayerId = localPlayerId;
         _displayName = displayName;
+        _asHost = asHost;
 
         if (!_networkManager)
         {
@@ -59,14 +61,15 @@ public class GameStarter : NetworkIdentity
 
     private void AddLocalPlayerState()
     {
-        Debug.Log($"GameStarter::AddLocalPlayerState: {_uniqueDeviceId}, {_localPlayerId}, {_displayName}");
+        Debug.Log($"GameStarter::AddLocalPlayerState: {_uniqueDeviceId}, {_localPlayerId}, {_displayName}, {_asHost}");
         
         Events.GameEvents.OnGameStateReady -= AddLocalPlayerState;
         if (!_gameState)
         {
             _gameState = FindAnyObjectByType<GameState>();
         }
-        _gameState.AddPlayer(_uniqueDeviceId, _localPlayerId, _displayName);
+        // TODO: We're not going to _always_ want the host to be the starter for the chain team
+        _gameState.AddPlayer(_uniqueDeviceId, _localPlayerId, _displayName, _asHost ? PlayerTeam.ChainTeam : PlayerTeam.FreeTeam);
     }
     
 }

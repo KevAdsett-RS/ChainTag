@@ -211,7 +211,6 @@ GameObject:
   - component: {fileID: -4787698641114630320}
   - component: {fileID: 2475410482124118199}
   - component: {fileID: 292456965724268761}
-  - component: {fileID: -3310377305785862381}
   - component: {fileID: 5454829974437661164}
   - component: {fileID: 4060793160383109281}
   - component: {fileID: 9084983986409415866}
@@ -378,37 +377,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Speed: 4
---- !u!114 &-3310377305785862381
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8531123005148006924}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1d8880993fe62624e948943ef5243429, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _isSetup: 0
-  _prefabId: -2147483648
-  _componentIndex: -2147483648
-  _shouldBePooled: 0
-  _parent: {fileID: 0}
-  _invertedPathToNearestParent: 
-  _directChildren: []
-  _networkRules: {fileID: 0}
-  _visitiblityRules: {fileID: 0}
-  FreeSprite: {fileID: 21300000, guid: c000ee88ae7ec554783d90462ddb7948, type: 3}
-  ChainedSprite: {fileID: 21300000, guid: b6a028b9c5204194688ec114c7ff40ec, type: 3}
-  _isHead:
-    _value: 0
-    _ownerAuth: 0
-    _sendIntervalInSeconds: 0
-  _isChained:
-    _value: 0
-    _ownerAuth: 0
-    _sendIntervalInSeconds: 0
 --- !u!114 &5454829974437661164
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -628,7 +596,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8dba4e23a8019bb4394b9390918fbe95, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DisplayName: {fileID: 4912249771578609007}
+  freeSprite: {fileID: 21300000, guid: c000ee88ae7ec554783d90462ddb7948, type: 3}
+  chainedSprite: {fileID: 21300000, guid: b6a028b9c5204194688ec114c7ff40ec, type: 3}
+  displayName: {fileID: 4912249771578609007}
 --- !u!1 &8576935580704654474
 GameObject:
   m_ObjectHideFlags: 0
