@@ -7,6 +7,7 @@ namespace DefaultNamespace
     {
         void Bind();
         void Unbind();
+        void TriggerCurrent();
     }
     public class StateBinding<T> : IStateBinding
     {
@@ -22,12 +23,16 @@ namespace DefaultNamespace
         public void Bind()
         {
             _var.onChanged += _handler;
-            // _handler?.Invoke(_var.value);
         }
 
         public void Unbind()
         {
             _var.onChanged -= _handler;
+        }
+
+        public void TriggerCurrent()
+        {
+            _handler?.Invoke(_var.value);
         }
     }
 }

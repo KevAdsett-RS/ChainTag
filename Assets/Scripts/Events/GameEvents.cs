@@ -11,6 +11,6 @@ namespace Events
             PlayerID /* localPlayerId */,
             string /* username */,
             bool /* asHost */> StartGame;
-        public static Action<PlayerState, PlayerTeam> OnPlayerChangedTeam;
+        public static Action<PlayerState, PlayerTeam /* oldTeam */, PlayerTeam /* newTeam */> OnPlayerChangedTeam;
     }
 }

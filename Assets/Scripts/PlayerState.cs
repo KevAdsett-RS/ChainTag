@@ -55,8 +55,9 @@ public class PlayerState : NetworkIdentity
     [ServerOnly]
     public void ChangeTeam(PlayerTeam newTeam)
     {
+        var prevTeam = Team.value;
         Team.value = newTeam;
-        GameEvents.OnPlayerChangedTeam?.Invoke(this, newTeam);
+        GameEvents.OnPlayerChangedTeam?.Invoke(this, prevTeam, newTeam);
     }
 
     protected override void OnDestroy()

@@ -18,12 +18,12 @@ public class GameState : NetworkIdentity
         FreeVictory
     }
 
-    private GameRunningState _currentState = GameRunningState.InLobby;
+    private GameRunningState _currentState = GameRunningState.InMatch;
 
     private float _timeRemaining = 60f;
-    private readonly SyncVar<string> _timeRemainingString = new();
-    private readonly SyncVar<int> _chainPlayerCount = new();
-    private readonly SyncVar<int> _freePlayerCount = new();
+    public readonly SyncVar<string> TimeRemainingString = new();
+    public readonly SyncVar<int> ChainPlayerCount = new();
+    public readonly SyncVar<int> FreePlayerCount = new();
     
     private readonly SyncDictionary<string, PlayerState> _players = new();
 
@@ -60,26 +60,31 @@ public class GameState : NetworkIdentity
 
     private void Update()
     {
+        if (!isServer)
+        {
+            return;
+        }
         switch (_currentState)
         {
             case GameRunningState.InLobby:
                 break;
             case GameRunningState.InMatch:
                 
-                if (_freePlayerCount.value <= 0)
+                if (FreePlayerCount.value <= 0)
                 {
-                    _currentState = GameRunningState.ChainVictory;
-                    return;
+                    // _currentState = GameRunningState.ChainVictory;
+                    // return;
                 }
                 _timeRemaining -= Time.deltaTime;
-                _timeRemainingString.value = "" + Math.Ceiling(_timeRemaining);
+                TimeRemainingString.value = "" + Math.Ceiling(_timeRemaining);
                 if (_timeRemaining <= 0f)
                 {
-                    if (_freePlayerCount.value > 0)
+                    if (FreePlayerCount.value > 0)
                     {
                         _currentState = GameRunningState.FreeVictory;
                     }
                 }
+
                 break;
             case GameRunningState.ChainVictory:
                 break;
@@ -90,14 +95,17 @@ public class GameState : NetworkIdentity
         }
     }
 
-    private void OnPlayerTeamChanged(PlayerState player, PlayerTeam newTeam)
+    private void OnPlayerTeamChanged(PlayerState player, PlayerTeam oldTeam, PlayerTeam newTeam)
     {
         switch (newTeam)
         {
             case PlayerTeam.ChainTeam:
             {
-                _chainPlayerCount.value++;
-                _freePlayerCount.value--;
+                ChainPlayerCount.value++;
+                if (oldTeam == PlayerTeam.FreeTeam)
+                {
+                    FreePlayerCount.value--;
+                }
 
                 if (_chainedPlayers.Count > 0)
                 {
@@ -111,8 +119,11 @@ public class GameState : NetworkIdentity
             // Probably won't get used, but you never know...
             case PlayerTeam.FreeTeam:
             {
-                _chainPlayerCount.value--;
-                _freePlayerCount.value++;
+                FreePlayerCount.value++;
+                if (oldTeam == PlayerTeam.ChainTeam)
+                {
+                    ChainPlayerCount.value--;
+                }
                 break;
             }
             default:
