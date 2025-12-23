@@ -204,7 +204,7 @@ namespace StateMachine.GameStates
         {
             Debug.Log($"MainMenuState::OnLocalPlayerReceivedId: {playerId}");
             _gameStartPacket.Add("localPlayerId", playerId);
-            Owner.ChangeState("GameRunningState", _gameStartPacket);
+            Owner.ChangeState("LobbyState", _gameStartPacket);
         }
     }
 }

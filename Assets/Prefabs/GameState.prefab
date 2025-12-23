@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2838117584161188355}
   - component: {fileID: 449899153121639009}
+  - component: {fileID: 4236240776826900382}
   m_Layer: 0
   m_Name: GameState
   m_TagString: Untagged
@@ -55,12 +56,15 @@ MonoBehaviour:
   _visitiblityRules: {fileID: 0}
   PlayerPrefab: {fileID: 8531123005148006924, guid: 2e92141f1041cca498eb3476268d214a, type: 3}
   IsGameStateReady: 0
-  _players:
-    _ownerAuth: 0
-    _serializedDict:
-      keys: []
-      values: []
-      stringKeys: []
-      stringValues: []
-    _sendIntervalInSeconds: 0
-    _useForceSend: 0
+--- !u!114 &4236240776826900382
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6994301016645541947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07d8f46e930d0a949af8d24c2d7afa88, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

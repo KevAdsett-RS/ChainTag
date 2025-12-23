@@ -9,6 +9,11 @@ public class GameState : NetworkIdentity
     public GameObject PlayerPrefab;
 
     public bool IsGameStateReady;
+    
+    public readonly SyncVar<string> TimeRemainingString = new();
+    public readonly SyncVar<int> ChainPlayerCount = new();
+    public readonly SyncVar<int> FreePlayerCount = new();
+    public readonly SyncDictionary<string, PlayerState> Players = new();
 
     private enum GameRunningState
     {
@@ -21,11 +26,6 @@ public class GameState : NetworkIdentity
     private GameRunningState _currentState = GameRunningState.InMatch;
 
     private float _timeRemaining = 60f;
-    public readonly SyncVar<string> TimeRemainingString = new();
-    public readonly SyncVar<int> ChainPlayerCount = new();
-    public readonly SyncVar<int> FreePlayerCount = new();
-    
-    private readonly SyncDictionary<string, PlayerState> _players = new();
 
     private readonly SyncList<PlayerState> _chainedPlayers = new();
 
@@ -49,7 +49,7 @@ public class GameState : NetworkIdentity
         playerState.GiveOwnership(playerId);
         playerState.Server_Initialise(playerId, displayName, team);
 
-        _players.Add(deviceId, playerState);
+        Players.Add(deviceId, playerState);
     }
 
     protected override void OnDestroy()

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using DefaultNamespace;
 using TMPro;
 using UnityEngine;
 
@@ -24,8 +23,8 @@ public class PlayerView : MonoBehaviour
 
     private void RegisterStateBindings()
     {
-        _stateBindings.Add(new StateBinding<string>(_state.Name, OnNameChanged));
-        _stateBindings.Add(new StateBinding<PlayerTeam>(_state.Team, OnTeamChanged));
+        _stateBindings.Add(new VarStateBinding<string>(_state.Name, OnNameChanged));
+        _stateBindings.Add(new VarStateBinding<PlayerTeam>(_state.Team, OnTeamChanged));
     }
     
     private void OnEnable()
