@@ -35,6 +35,6 @@ AssetOrigin:
   serializedVersion: 1
   productId: 81338
   packageName: Nakama
-  packageVersion: 3.20.0
+  packageVersion: 3.21.0
   assetPath: Assets/Nakama/Runtime/Plugins/Nakama.dll
-  uploadId: 830550
+  uploadId: 837682
