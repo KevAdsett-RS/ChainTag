@@ -1,11 +1,10 @@
 using System;
 using PurrNet;
 using UnityEngine;
-using Object = UnityEngine.Object;
+using Events;
 
 public class GameStarter : NetworkIdentity
 {
-
     private GameState _gameState;
 
     private string _uniqueDeviceId;
@@ -14,23 +13,28 @@ public class GameStarter : NetworkIdentity
     private NetworkManager _networkManager;
     private bool _asHost;
 
+    private void Awake()
+    {
+        DontDestroyOnLoad(this);
+    }
+
     private void Start()
     {
         Debug.Log("GameStarter::Start");
-        Events.GameEvents.StartGame += StartGame;
+        LobbyEvents.AddPlayerToGame += AddPlayerToGame;
         _networkManager = FindAnyObjectByType<NetworkManager>();
     }
 
     protected override void OnDestroy()
     {
         Debug.Log("GameStarter::OnDestroy");
-        Events.GameEvents.StartGame -= StartGame;
+        LobbyEvents.AddPlayerToGame -= AddPlayerToGame;
         base.OnDestroy();
     }
 
-    public void StartGame(string uniqueDeviceId, PlayerID localPlayerId, string displayName, bool asHost)
+    public void AddPlayerToGame(string uniqueDeviceId, PlayerID localPlayerId, string displayName, bool asHost)
     {
-        Debug.Log("GameStarter::StartGame");
+        Debug.Log($"GameStarter::AddPlayerToGame {localPlayerId}: {displayName}");
      
         _uniqueDeviceId = uniqueDeviceId;
         _localPlayerId = localPlayerId;
@@ -50,7 +54,7 @@ public class GameStarter : NetworkIdentity
         if (!_gameState || !_gameState.IsGameStateReady)
         {
             Debug.Log("GameStarter::StartGame: Waiting for game state to be ready");
-            Events.GameEvents.OnGameStateReady += AddLocalPlayerState;
+            GameEvents.OnGameStateReady += AddLocalPlayerState;
         }
         else
         {
@@ -63,13 +67,13 @@ public class GameStarter : NetworkIdentity
     {
         Debug.Log($"GameStarter::AddLocalPlayerState: {_uniqueDeviceId}, {_localPlayerId}, {_displayName}, {_asHost}");
         
-        Events.GameEvents.OnGameStateReady -= AddLocalPlayerState;
+        GameEvents.OnGameStateReady -= AddLocalPlayerState;
         if (!_gameState)
         {
             _gameState = FindAnyObjectByType<GameState>();
         }
         // TODO: We're not going to _always_ want the host to be the starter for the chain team
-        _gameState.AddPlayer(_uniqueDeviceId, _localPlayerId, _displayName, _asHost ? PlayerTeam.ChainTeam : PlayerTeam.FreeTeam);
+        _gameState.AddPlayerState(_uniqueDeviceId, _localPlayerId, _displayName, _asHost ? PlayerTeam.ChainTeam : PlayerTeam.FreeTeam);
     }
     
 }

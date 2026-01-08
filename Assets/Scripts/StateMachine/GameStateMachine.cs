@@ -24,6 +24,7 @@ namespace StateMachine
 
         private void Awake()
         {
+            DontDestroyOnLoad(this);
             Instance = this;
             InitialiseNakama();
             DontDestroyOnLoad(this);
@@ -94,6 +95,7 @@ namespace StateMachine
                 throw new Exception($"GameStateMachine::GetStatePacket: State packet with key {key} doesn't exist");
             }
             var value = _statePackets[key];
+            Debug.Log($"GameStateMachine::GetStatePacket consumed packet with key {key}");
             _statePackets.Remove(key);
             return (T)value;
         }

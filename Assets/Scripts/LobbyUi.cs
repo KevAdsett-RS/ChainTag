@@ -3,26 +3,67 @@ using System.Collections.Generic;
 using PurrNet;
 using TMPro;
 using UnityEngine;
+using Object = System.Object;
 
-public class LobbyUi : ReactiveUi
+public class LobbyUi : StateBinder
 {
 
+    struct NameChangeResponse
+    {
+        public SyncVar<string> NameVar;
+        public Action<string> Handler;
+    }
     [SerializeField]
     private GameObject playerListContainer;
     [SerializeField]
     private GameObject playerListEntryPrefab;
+    [SerializeField]
+    private GameObject startGameButton;
+    [SerializeField]
+    private GameObject waitingForHostText;
 
-    private readonly Dictionary<string, GameObject> _playerEntries = new();
-    private readonly Dictionary<string, SyncVar<string>> _playerNames = new();
-    private readonly Dictionary<string, Action<string>> _nameChangeHandlers = new();
+    private readonly Dictionary<PlayerID, GameObject> _playerNameObjects = new();
+    private readonly Dictionary<PlayerID, NameChangeResponse> _nameChangeHandlers = new();
+    
+    private static NameChangeResponse SetupNewNameChangeResponse(SyncVar<string> valueName, Action<string> handler)
+    {
+        var response = new NameChangeResponse
+        {
+            NameVar = valueName,
+            Handler = handler
+        };
+        response.NameVar.onChanged += response.Handler;
+        return response;
+    }
+
+    private static void TearDownNameChangeResponse(NameChangeResponse response)
+    {
+        response.NameVar.onChanged -= response.Handler;
+    }
+    
+    protected override void Awake()
+    {
+        Debug.Log("LobbyUi::Awake");
+        base.Awake();
+        var networkManager = FindFirstObjectByType<NetworkManager>();
+        startGameButton.SetActive(networkManager.isHost);
+        waitingForHostText.SetActive(networkManager.isClientOnly);
+    }
+    
+    public void OnStartGameButtonPressed()
+    {
+        Events.LobbyEvents.OnStartGameButtonPressed?.Invoke();
+    }
     
     protected override void RegisterBindings(GameState gameState, List<IStateBinding> stateBindings)
     {
-        stateBindings.Add(new DictionaryStateBinding<string, PlayerState>(gameState.Players, OnPlayerListChanged));
+        Debug.Log($"LobbyUi::RegisterBindings {gameState}");
+        stateBindings.Add(new DictionaryStateBinding<PlayerID, PlayerState>(gameState.Players, OnPlayerListChanged));
     }
 
-    private void OnPlayerListChanged(SyncDictionaryChange<string, PlayerState> change)
+    private void OnPlayerListChanged(SyncDictionaryChange<PlayerID, PlayerState> change)
     {
+        Debug.Log($"LobbyUi::OnPlayerListChanged {change}");
         switch (change.operation)
         {
             case SyncDictionaryOperation.Added:
@@ -32,14 +73,18 @@ public class LobbyUi : ReactiveUi
             }
             case SyncDictionaryOperation.Removed:
             {
-                Destroy(_playerEntries[change.key]);
+                var nameObject = _playerNameObjects[change.key];
+                Destroy(nameObject);
+                _playerNameObjects.Remove(change.key);
+                TearDownNameChangeResponse(_nameChangeHandlers[change.key]);
+                _nameChangeHandlers.Remove(change.key);
                 break;
             }
             case SyncDictionaryOperation.Set:
             {
-                if (_playerEntries.TryGetValue(change.key, out var entry))
+                if (_playerNameObjects.TryGetValue(change.key, out var playerNameObject))
                 {
-                    Destroy(entry);
+                    Destroy(playerNameObject);
                 }
                 AddPlayerEntry(change);
                 break;
@@ -53,34 +98,42 @@ public class LobbyUi : ReactiveUi
         }
     }
 
-    private void AddPlayerEntry(SyncDictionaryChange<string, PlayerState> change)
+    private void AddPlayerEntry(SyncDictionaryChange<PlayerID, PlayerState> change)
     {
-        string playerKey = change.key;
-        _playerNames.Add(playerKey, change.value.Name);
+        Debug.Log($"LobbyUi::AddPlayerEntry: key: {change.key}");
+        Debug.Log($"LobbyUi::AddPlayerEntry: value: {change.value}");
+        Debug.Log($"LobbyUi::AddPlayerEntry: playerListEntryPrefab: {playerListEntryPrefab}");
+        Debug.Log($"LobbyUi::AddPlayerEntry: playerListContainer: {playerListContainer} ");
+        PlayerID playerKey = change.key;
+        if (_nameChangeHandlers.ContainsKey(playerKey))
+        {
+            return;
+        }
         
-        var newEntry = Instantiate(playerListEntryPrefab, playerListContainer.transform);
+        var newPlayerNameObject = Instantiate(playerListEntryPrefab, playerListContainer.transform);
         
         Action<string> handler = (newName) => OnPlayerNameChanged(playerKey, newName);
-        _nameChangeHandlers.Add(playerKey, handler);
+        _nameChangeHandlers.Add(playerKey, SetupNewNameChangeResponse(change.value.Name, handler));
         change.value.Name.onChanged += handler;
         
-        _playerEntries.Add(change.key, newEntry);
+        _playerNameObjects.Add(change.key, newPlayerNameObject);
         
         handler(change.value.Name.value);
     }
 
-    private void OnDestroy()
+    protected override void OnDestroy()
     {
         foreach (var keyValuePair in _nameChangeHandlers)
         {
-            _playerNames[keyValuePair.Key].onChanged -= keyValuePair.Value;
+            TearDownNameChangeResponse(keyValuePair.Value);
         }
         _nameChangeHandlers.Clear();
+        base.OnDestroy();
     }
 
-    private void OnPlayerNameChanged(string playerKey, string newValue)
+    private void OnPlayerNameChanged(PlayerID playerKey, string newValue)
     {
-        var entry = _playerEntries[playerKey];
-        entry.GetComponentInChildren<TMP_Text>().text = newValue;
+        var playerNameObject = _playerNameObjects[playerKey];
+        playerNameObject.GetComponentInChildren<TMP_Text>().text = newValue;
     }
 }

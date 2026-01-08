@@ -20,6 +20,7 @@ public class VarStateBinding<T> : IStateBinding
     public void Bind()
     {
         _var.onChanged += _handler;
+        _handler?.Invoke(_var);
     }
 
     public void Unbind()
@@ -42,6 +43,10 @@ public class ListStateBinding<T> : IStateBinding
     public void Bind()
     {
         _list.onChanged += _handler;
+        for (var i = 0; i < _list.Count; i++)
+        {
+            _handler.Invoke(SyncListChange<T>.Added(_list[i], i));
+        }
     }
 
     public void Unbind()
@@ -64,6 +69,11 @@ public class DictionaryStateBinding<T1, T2> : IStateBinding
     public void Bind()
     {
         _dict.onChanged += _handler;
+
+        foreach (var keyValuePair in _dict)
+        {
+            _handler.Invoke(new SyncDictionaryChange<T1, T2>(SyncDictionaryOperation.Added, keyValuePair.Key, keyValuePair.Value));
+        }
     }
 
     public void Unbind()

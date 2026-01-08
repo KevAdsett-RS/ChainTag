@@ -6,11 +6,8 @@ namespace Events
     public struct GameEvents
     {
         public static Action OnGameStateReady;
-        public static Action<
-            string /* UniqueDeviceId */,
-            PlayerID /* localPlayerId */,
-            string /* username */,
-            bool /* asHost */> StartGame;
-        public static Action<PlayerState, PlayerTeam /* oldTeam */, PlayerTeam /* newTeam */> OnPlayerChangedTeam;
+        public static Action<PlayerID> OnPlayerDisconnected;
+        public static Action<PlayerID, PlayerTeam> OnPlayerChangedTeam;
+        public static Action OnStartGame;
     }
 }

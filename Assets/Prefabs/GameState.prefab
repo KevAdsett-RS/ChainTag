@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2838117584161188355}
   - component: {fileID: 449899153121639009}
-  - component: {fileID: 4236240776826900382}
+  - component: {fileID: -5426472854738889741}
   m_Layer: 0
   m_Name: GameState
   m_TagString: Untagged
@@ -54,9 +54,10 @@ MonoBehaviour:
   _directChildren: []
   _networkRules: {fileID: 0}
   _visitiblityRules: {fileID: 0}
+  PlayerStatePrefab: {fileID: 7257019490087854756, guid: a34de89d1fdf1a34fb376fdf6580bd6a, type: 3}
   PlayerPrefab: {fileID: 8531123005148006924, guid: 2e92141f1041cca498eb3476268d214a, type: 3}
   IsGameStateReady: 0
---- !u!114 &4236240776826900382
+--- !u!114 &-5426472854738889741
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -65,6 +66,25 @@ MonoBehaviour:
   m_GameObject: {fileID: 6994301016645541947}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 07d8f46e930d0a949af8d24c2d7afa88, type: 3}
+  m_Script: {fileID: 11500000, guid: 817fe5016bd0a2a49a95b6eb338bb132, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _isSetup: 0
+  _prefabId: -2147483648
+  _componentIndex: -2147483648
+  _shouldBePooled: 0
+  _parent: {fileID: 0}
+  _invertedPathToNearestParent: 
+  _directChildren: []
+  _networkRules: {fileID: 0}
+  _visitiblityRules: {fileID: 0}
+  _syncPosition: 1
+  _syncRotation: 1
+  _syncScale: 1
+  _syncParent: 1
+  _interpolateSettings: 7
+  _minBufferSize: 1
+  _maxBufferSize: 2
+  _characterControllerPatch: 0
+  _ownerAuth: 1
+  _interpolationTiming: 0

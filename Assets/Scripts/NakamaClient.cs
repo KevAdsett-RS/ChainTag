@@ -21,7 +21,12 @@ public class NakamaClient : MonoBehaviour
     private ISession _session;
     
     private event Action _clientCreated;
-    
+
+    private void Awake()
+    {
+        DontDestroyOnLoad(this);
+    }
+
     void Start()
     {
         DontDestroyOnLoad(this);

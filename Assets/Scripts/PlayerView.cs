@@ -3,28 +3,32 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
+[RequireComponent(typeof(PlayerController)), RequireComponent(typeof(LineRenderer))]
 public class PlayerView : MonoBehaviour
 {
     [SerializeField] private Sprite freeSprite;
     [SerializeField] private Sprite chainedSprite;
     
     [SerializeField] private TMP_Text displayName;
-
-    private PlayerState _state;
-
-    private readonly List<IStateBinding> _stateBindings = new();
     
-    void Awake()
+    private readonly List<IStateBinding> _stateBindings = new();
+
+    private LineRenderer _lineRenderer;
+    private PlayerController _myPlayerController;
+    private PlayerController _linkedPlayerController;
+
+    private void Awake()
     {
-        Debug.Log("PlayerView::Start");
-        _state = GetComponent<PlayerState>();
-        RegisterStateBindings();
+        _myPlayerController = GetComponent<PlayerController>();
+        _lineRenderer = GetComponent<LineRenderer>();
     }
 
-    private void RegisterStateBindings()
+    public void RegisterStateBindings(PlayerState state)
     {
-        _stateBindings.Add(new VarStateBinding<string>(_state.Name, OnNameChanged));
-        _stateBindings.Add(new VarStateBinding<PlayerTeam>(_state.Team, OnTeamChanged));
+        _stateBindings.Add(new VarStateBinding<string>(state.Name, OnNameChanged));
+        _stateBindings.Add(new VarStateBinding<PlayerTeam>(state.Team, OnTeamChanged));
+        _stateBindings.Add(new VarStateBinding<PlayerState>(state.LinkedPlayer, OnLinkedPlayerChanged));
+        OnEnable();
     }
     
     private void OnEnable()
@@ -62,5 +66,27 @@ public class PlayerView : MonoBehaviour
             PlayerTeam.FreeTeam => freeSprite,
             _ => throw new Exception($"PlayerState::OnTeamChanged: Unknown team {newTeam}")
         };
+    }
+
+    private void OnLinkedPlayerChanged(PlayerState newLinkedPlayer)
+    {
+        if (!newLinkedPlayer)
+        {
+            return;
+        }
+        Debug.Log($"{name}: PlayerView::OnLinkedPlayerChanged {newLinkedPlayer}");
+        _linkedPlayerController = newLinkedPlayer.Body.value.GetComponent<PlayerController>();
+        _lineRenderer.enabled = true;
+    }
+
+    private void Update()
+    {
+        if (!_linkedPlayerController)
+        {
+            return;
+        }
+
+        _lineRenderer.SetPosition(0, _linkedPlayerController.LeftHand.position);
+        _lineRenderer.SetPosition(1, _myPlayerController.RightHand.position);
     }
 }

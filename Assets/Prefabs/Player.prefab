@@ -213,10 +213,10 @@ GameObject:
   - component: {fileID: 292456965724268761}
   - component: {fileID: 5454829974437661164}
   - component: {fileID: 4060793160383109281}
-  - component: {fileID: 9084983986409415866}
   - component: {fileID: 4821307595127775039}
   - component: {fileID: 4261289292501649416}
   - component: {fileID: 7290410332103778463}
+  - component: {fileID: 6730623493983154919}
   m_Layer: 3
   m_Name: Player
   m_TagString: Untagged
@@ -429,33 +429,6 @@ SpringJoint2D:
   m_Distance: 0.8
   m_DampingRatio: 0
   m_Frequency: 3
---- !u!114 &9084983986409415866
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8531123005148006924}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cfd659b755cd89d43858c86e05c9d90c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _isSetup: 0
-  _prefabId: -2147483648
-  _componentIndex: -2147483648
-  _shouldBePooled: 0
-  _parent: {fileID: 0}
-  _invertedPathToNearestParent: 
-  _directChildren: []
-  _networkRules: {fileID: 0}
-  _visitiblityRules: {fileID: 0}
-  RightHand: {fileID: 2282719305371714900}
-  LeftHand: {fileID: 3692073789898918098}
-  _linkedUnit:
-    _value: {fileID: 0}
-    _ownerAuth: 0
-    _sendIntervalInSeconds: 0
 --- !u!120 &4821307595127775039
 LineRenderer:
   serializedVersion: 2
@@ -599,6 +572,29 @@ MonoBehaviour:
   freeSprite: {fileID: 21300000, guid: c000ee88ae7ec554783d90462ddb7948, type: 3}
   chainedSprite: {fileID: 21300000, guid: b6a028b9c5204194688ec114c7ff40ec, type: 3}
   displayName: {fileID: 4912249771578609007}
+--- !u!114 &6730623493983154919
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8531123005148006924}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8db7fa4ff81b8e4495160e4f0908cc6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _isSetup: 0
+  _prefabId: -2147483648
+  _componentIndex: -2147483648
+  _shouldBePooled: 0
+  _parent: {fileID: 0}
+  _invertedPathToNearestParent: 
+  _directChildren: []
+  _networkRules: {fileID: 0}
+  _visitiblityRules: {fileID: 0}
+  RightHand: {fileID: 2282719305371714900}
+  LeftHand: {fileID: 3692073789898918098}
 --- !u!1 &8576935580704654474
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,8 +1,8 @@
 using System;
 using Events;
-using Input;
 using PurrNet;
-using TMPro;
+using PurrNet.Modules;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public enum PlayerTeam
@@ -12,83 +12,60 @@ public enum PlayerTeam
     FreeTeam
 }
 
-[RequireComponent(typeof(ChainUnit)), RequireComponent(typeof(PlayerMovement))]
 public class PlayerState : NetworkIdentity
 {
     public readonly SyncVar<string> Name = new();
     public readonly SyncVar<PlayerTeam> Team = new();
-    public readonly SyncVar<PlayerID> Id = new();
-    
-    private readonly SyncVar<bool> _isHead = new();
-    
+    public readonly SyncVar<PlayerID> PlayerId = new();
+    public readonly SyncVar<PlayerState> LinkedPlayer = new();
+    public readonly SyncVar<bool> IsHead = new();
+    public readonly SyncVar<GameObject> Body = new();
 
     private void Awake()
     {
-        Debug.Log("PlayerState::Awake");
         Name.onChanged += OnNameChanged;
+    }
+
+    private void OnNameChanged(string newValue)
+    {
+        name = newValue + "State";
+    }
+
+    protected override void OnDestroy()
+    {
+        Debug.Log($"PlayerState::OnDestroy for {name}");
+        Name.onChanged -= OnNameChanged;
+        base.OnDestroy();
     }
 
     [ServerOnly]
     public void Server_Initialise(PlayerID target, string displayName, PlayerTeam team)
     {
-        Id.value = target;
+        Debug.Log($"PlayerState::Server_Initialise for {name} ({target})");
+        PlayerId.value = target;
         Name.value = displayName;
-        ChangeTeam(team);
+        Server_ChangeTeam(team);
         
-        _isHead.value = team == PlayerTeam.ChainTeam;
-        Client_Initialise(target);
-    }
-
-    [TargetRpc]
-    public void Client_Initialise(PlayerID target)
-    {
-        Debug.Log($"PlayerState::Client_Initialise: isOwner: {isOwner}");
-        if (!isOwner)
-        {
-            return;
-        }
-        
-        gameObject.AddComponent<PlayerInputHandler>();
-        gameObject.GetComponent<PlayerMovement>().enabled = true;
+        IsHead.value = team == PlayerTeam.ChainTeam;
     }
 
     [ServerOnly]
-    public void ChangeTeam(PlayerTeam newTeam)
+    public void Server_SetBody(GameObject body)
     {
-        var prevTeam = Team.value;
+        Body.value = body;
+    }
+
+    [ServerOnly]
+    public void Server_ChangeTeam(PlayerTeam newTeam)
+    {
+        Debug.Log($"PlayerState::Server_ChangeTeam for {name} (Id: {PlayerId.value}) -> {newTeam}");
         Team.value = newTeam;
-        GameEvents.OnPlayerChangedTeam?.Invoke(this, prevTeam, newTeam);
+        GameEvents.OnPlayerChangedTeam?.Invoke(PlayerId.value, newTeam);
     }
 
-    protected override void OnDestroy()
+    [ServerOnly]
+    public void Server_SetLinkedPlayer(PlayerState player)
     {
-        Debug.Log("PlayerState::OnDestroy");
-        Name.onChanged -= OnNameChanged;
-        base.OnDestroy();
-    }
-    
-    private void OnNameChanged(string newValue)
-    {
-        Debug.Log("PlayerState::OnNameChanged");
-    }
-    
-    public void OnCollisionEnter2D(Collision2D other)
-    {
-        if (!isServer || !_isHead.value)
-        {
-            return;
-        }
-
-        other.gameObject.GetComponent<PlayerState>().ChangeTeam(PlayerTeam.ChainTeam);
-    }
-
-    public void SetLinkedPlayer(PlayerState chainedPlayer)
-    {
-        var chainUnit = GetComponent<ChainUnit>();
-        if (!chainUnit)
-        {
-            return;
-        }
-        chainUnit.SetLinkedUnit(chainedPlayer.GetComponent<ChainUnit>());
+        LinkedPlayer.value = player;
     }
 }

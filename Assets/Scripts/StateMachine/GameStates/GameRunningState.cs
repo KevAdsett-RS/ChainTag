@@ -1,5 +1,7 @@
+using Events;
 using PurrNet;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
 namespace StateMachine.GameStates
@@ -20,7 +22,7 @@ namespace StateMachine.GameStates
             {
                 return;
             }
-            _networkManager.sceneModule.LoadSceneAsync(SceneName);
+            _networkManager.sceneModule.LoadSceneAsync(SceneName, LoadSceneMode.Additive);
         }
 
         protected override void OnExit()
@@ -28,6 +30,7 @@ namespace StateMachine.GameStates
             if (_networkManager)
             {
                 _networkManager.sceneModule.onPostSceneLoaded -= OnSceneLoaded;
+                _networkManager.sceneModule.UnloadSceneAsync(SceneName);
             }
 
             base.OnExit();
@@ -36,6 +39,10 @@ namespace StateMachine.GameStates
         private void OnSceneLoaded(SceneID sceneId, bool asServer)
         {
             Debug.Log($"GameRunningState::OnSceneLoaded: {SceneName}");
+            if (_networkManager.isServer)
+            {
+                GameEvents.OnStartGame?.Invoke();
+            }
         }
     }
 }

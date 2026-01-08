@@ -20,6 +20,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Lobby.unity
     guid: c20539082ca0f6a4d9e9c28f0dcee5d4
+  - enabled: 1
+    path: Assets/Scenes/ConnectedPersistent.unity
+    guid: dc77e7a3bbdc4bc4f8b57a390340aafe
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0

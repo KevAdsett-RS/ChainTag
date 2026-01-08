@@ -123,7 +123,6 @@ namespace StateMachine.GameStates
             _networkManager = Object.FindFirstObjectByType<NetworkManager>();
             
             _networkManager.onNetworkStarted += OnNetworkStarted;
-            _networkManager.onClientConnectionState += OnClientConnectionStateChange;
             _networkManager.onLocalPlayerReceivedID += OnLocalPlayerReceivedId;
             
             Events.MainMenuEvents.OnJoinButtonPressed += OnJoin;
@@ -150,7 +149,6 @@ namespace StateMachine.GameStates
         {
             base.OnExit();
             _networkManager.onNetworkStarted -= OnNetworkStarted;
-            _networkManager.onClientConnectionState -= OnClientConnectionStateChange;
             _networkManager.onLocalPlayerReceivedID -= OnLocalPlayerReceivedId;
             
             Events.MainMenuEvents.OnJoinButtonPressed -= OnJoin;
@@ -192,13 +190,6 @@ namespace StateMachine.GameStates
             Debug.Log($"MainMenuState::OnNetworkStarted, asServer: {asServer}");
         }
 
-        private void OnClientConnectionStateChange(ConnectionState connectionState)
-        {
-            Debug.Log($"MainMenuState::OnClientConnectionStateChange: {connectionState}");
-            if (connectionState == ConnectionState.Connected)
-            {
-            }
-        }
 
         private void OnLocalPlayerReceivedId(PlayerID playerId)
         {

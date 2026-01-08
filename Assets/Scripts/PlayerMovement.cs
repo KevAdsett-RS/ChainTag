@@ -3,6 +3,7 @@ using System;
 using Input;
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody2D))]
 public class PlayerMovement : MonoBehaviour
 {
     public int Speed = 10;
@@ -15,6 +16,11 @@ public class PlayerMovement : MonoBehaviour
     {
         _rigidbody = GetComponent<Rigidbody2D>();
         _inputManager = GetComponent<PlayerInputHandler>();
+
+        if (!_inputManager)
+        {
+            return;
+        }
 
         _inputManager.OnMove.AddListener(OnMove);
     }

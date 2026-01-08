@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-public class MainGameUi : ReactiveUi
+public class MainGameUi : StateBinder
 {
     [SerializeField] private TMP_Text ChainPlayerCount;
     [SerializeField] private TMP_Text FreePlayerCount;
