@@ -37,7 +37,7 @@ namespace Match
         private float _timeRemaining = 60f;
         protected override void OnSpawned()
         {
-            Debug.Log("GameState::OnSpawned");
+            Debug.Log("MatchState::OnSpawned");
             base.OnSpawned();
     
             IsReady = true;
@@ -54,7 +54,7 @@ namespace Match
 
         private void OnPlayerLeft(PlayerID player, bool asServer)
         {
-            Debug.Log($"GameState::OnPlayerLeft: player: {player}, asServer: {asServer}");
+            Debug.Log($"MatchState::OnPlayerLeft: player: {player}, asServer: {asServer}");
             if (asServer)
             {
                 Players.Remove(player);
@@ -68,7 +68,7 @@ namespace Match
         [ServerRpc(requireOwnership:false)]
         public void Server_AddPlayerState(string deviceId, PlayerID playerId, string displayName, PlayerTeam team)
         {
-            Debug.Log($"GameState::Server_AddPlayerState {playerId} - {displayName} ({team})");
+            Debug.Log($"MatchState::Server_AddPlayerState {playerId} - {displayName} ({team})");
             var player = Instantiate(PlayerStatePrefab, gameObject.transform);
             player.name = displayName + "State";
             var playerState = player.GetComponent<PlayerState>();
@@ -85,23 +85,23 @@ namespace Match
         {
             var chainTeamSpawnPoint = GameObject.Find("ChainTeamSpawnPoint");
             var freeTeamSpawnPoint = GameObject.Find("FreeTeamSpawnPoint");
-            Debug.Log("GameState::Server_InstantiatePlayers");
+            Debug.Log("MatchState::Server_InstantiatePlayers");
             foreach (var keyValuePair in Players)
             {
                 var player = Instantiate(PlayerPrefab);
                 keyValuePair.Value.Server_SetBody(player);
                 player.name = keyValuePair.Value.Name.value;
         
-                Debug.Log($"GameState::Server_InstantiatePlayers: player {player.name} is on team {keyValuePair.Value.Team.value}");
+                Debug.Log($"MatchState::Server_InstantiatePlayers: player {player.name} is on team {keyValuePair.Value.Team.value}");
 
                 if (keyValuePair.Value.Team.value == PlayerTeam.ChainTeam)
                 {
-                    Debug.Log($"GameState::Server_InstantiatePlayers: Setting {player.name}'s position to {chainTeamSpawnPoint.transform.position}");
+                    Debug.Log($"MatchState::Server_InstantiatePlayers: Setting {player.name}'s position to {chainTeamSpawnPoint.transform.position}");
                     player.transform.position = chainTeamSpawnPoint.transform.position;
                 }
                 else
                 {
-                    Debug.Log($"GameState::Server_InstantiatePlayers: Setting {player.name}'s position to {freeTeamSpawnPoint.transform.position}");
+                    Debug.Log($"MatchState::Server_InstantiatePlayers: Setting {player.name}'s position to {freeTeamSpawnPoint.transform.position}");
                     player.transform.position = freeTeamSpawnPoint.transform.position;
                 }
         
@@ -118,7 +118,7 @@ namespace Match
 
         protected override void OnDestroy()
         {
-            Debug.Log("GameState::OnDestroy");
+            Debug.Log("MatchState::OnDestroy");
             GameEvents.OnPlayerChangedTeam -= Server_OnPlayerTeamChanged;
             GameEvents.OnStartGame -= Server_OnStartGame;
             if (networkManager)
@@ -169,7 +169,7 @@ namespace Match
 
         private void OnPhaseChanged()
         {
-            Debug.Log($"GameState::OnPhaseChanged: new phase: {_currentPhase.value}");
+            Debug.Log($"MatchState::OnPhaseChanged: new phase: {_currentPhase.value}");
             switch (_currentPhase.value)
             {
                 case MatchPhase.MatchEnd:
@@ -185,7 +185,7 @@ namespace Match
         [ServerOnly]
         private void Server_OnMatchEnd()
         {
-            Debug.Log($"GameState::Server_RemovePlayerBodies");
+            Debug.Log($"MatchState::Server_RemovePlayerBodies");
             foreach (var playerGameObject in _serverPlayerGameObjects)
             {
                 Destroy(playerGameObject);
@@ -213,7 +213,7 @@ namespace Match
         [ServerOnly]
         private void Server_OnPlayerTeamChanged(PlayerID playerId, PlayerTeam newTeam)
         {
-            Debug.Log($"GameState::Server_OnPlayerTeamChanged {playerId} -> {newTeam}");
+            Debug.Log($"MatchState::Server_OnPlayerTeamChanged {playerId} -> {newTeam}");
             var player = Players[playerId];
             if (!player)
             {
@@ -248,7 +248,7 @@ namespace Match
         [ServerOnly]
         private void Server_OnStartGame()
         {
-            Debug.Log("GameState::Server_OnStartGame");
+            Debug.Log("MatchState::Server_OnStartGame");
             Server_InstantiatePlayers();
             _currentPhase.value = MatchPhase.InMatch;
         }
