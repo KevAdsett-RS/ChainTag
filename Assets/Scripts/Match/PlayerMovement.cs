@@ -1,43 +1,46 @@
 using Input;
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody2D))]
-public class PlayerMovement : MonoBehaviour
+namespace Match
 {
-    public int Speed = 10;
-    private Vector2 _velocity;
-
-    private Rigidbody2D _rigidbody;
-    private PlayerInputHandler _inputManager;
-
-    void Start()
+    [RequireComponent(typeof(Rigidbody2D))]
+    public class PlayerMovement : MonoBehaviour
     {
-        _rigidbody = GetComponent<Rigidbody2D>();
-        _inputManager = GetComponent<PlayerInputHandler>();
+        public int Speed = 10;
+        private Vector2 _velocity;
 
-        if (!_inputManager)
+        private Rigidbody2D _rigidbody;
+        private PlayerInputHandler _inputManager;
+
+        void Start()
         {
-            return;
+            _rigidbody = GetComponent<Rigidbody2D>();
+            _inputManager = GetComponent<PlayerInputHandler>();
+
+            if (!_inputManager)
+            {
+                return;
+            }
+
+            _inputManager.OnMove.AddListener(OnMove);
         }
 
-        _inputManager.OnMove.AddListener(OnMove);
-    }
-
-    private void OnDestroy()
-    {
-        if (_inputManager)
+        private void OnDestroy()
         {
-            _inputManager.OnMove.RemoveListener(OnMove);
+            if (_inputManager)
+            {
+                _inputManager.OnMove.RemoveListener(OnMove);
+            }
         }
-    }
 
-    private void FixedUpdate()
-    {
-        _rigidbody.MovePosition(_rigidbody.position + _velocity * Time.fixedDeltaTime);
-    }
+        private void FixedUpdate()
+        {
+            _rigidbody.MovePosition(_rigidbody.position + _velocity * Time.fixedDeltaTime);
+        }
 
-    public void OnMove(Vector2 moveVector)
-    {
-        _velocity = moveVector * Speed;
+        public void OnMove(Vector2 moveVector)
+        {
+            _velocity = moveVector * Speed;
+        }
     }
 }
