@@ -5,7 +5,7 @@ using Match;
 
 public class GameStarter : NetworkIdentity
 {
-    private GameState _gameState;
+    private MatchState _matchState;
 
     private string _uniqueDeviceId;
     private PlayerID _localPlayerId;
@@ -45,8 +45,8 @@ public class GameStarter : NetworkIdentity
             return;
         }
         
-        _gameState = FindAnyObjectByType<GameState>();
-        if (!_gameState || !_gameState.IsReady)
+        _matchState = FindAnyObjectByType<MatchState>();
+        if (!_matchState || !_matchState.IsReady)
         {
             Debug.Log("GameStarter::StartGame: Waiting for game state to be ready");
             GameEvents.OnGameStateReady += Client_AddLocalPlayerState;
@@ -69,16 +69,16 @@ public class GameStarter : NetworkIdentity
         Debug.Log($"GameStarter::Client_AddLocalPlayerState: {_uniqueDeviceId}, {_localPlayerId}, {_displayName}, {_asHost}");
         
         GameEvents.OnGameStateReady -= Client_AddLocalPlayerState;
-        if (!_gameState)
+        if (!_matchState)
         {
-            _gameState = FindAnyObjectByType<GameState>();
+            _matchState = FindAnyObjectByType<MatchState>();
         }
-        if (_gameState != null && _gameState.isSpawned)
+        if (_matchState != null && _matchState.isSpawned)
         {
             // TODO: We're not going to _always_ want the host to be the starter for the chain team
             PlayerTeam starterTeam = _asHost ? PlayerTeam.ChainTeam : PlayerTeam.FreeTeam;
             
-            _gameState.Server_AddPlayerState(_uniqueDeviceId, _localPlayerId, _displayName, starterTeam);
+            _matchState.Server_AddPlayerState(_uniqueDeviceId, _localPlayerId, _displayName, starterTeam);
         }
     }
     

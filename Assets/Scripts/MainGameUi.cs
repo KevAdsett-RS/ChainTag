@@ -10,11 +10,11 @@ public class MainGameUi : StateBinder
     [SerializeField] private TMP_Text FreePlayerCount;
     [SerializeField] private TMP_Text TimeRemaining;
     
-    protected override void RegisterBindings(GameState gameState, List<IStateBinding> stateBindings)
+    protected override void RegisterBindings(MatchState matchState, List<IStateBinding> stateBindings)
     {
-        stateBindings.Add(new VarStateBinding<int>(gameState.ChainPlayerCount, OnChainPlayerCountChanged));
-        stateBindings.Add(new VarStateBinding<int>(gameState.FreePlayerCount, OnFreePlayerCountChanged));
-        stateBindings.Add(new VarStateBinding<string>(gameState.TimeRemainingString, OnTimeRemainingChanged));
+        stateBindings.Add(new VarStateBinding<int>(matchState.ChainPlayerCount, OnChainPlayerCountChanged));
+        stateBindings.Add(new VarStateBinding<int>(matchState.FreePlayerCount, OnFreePlayerCountChanged));
+        stateBindings.Add(new VarStateBinding<string>(matchState.TimeRemainingString, OnTimeRemainingChanged));
     }
 
     private void OnChainPlayerCountChanged(int newValue)

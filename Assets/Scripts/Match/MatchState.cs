@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Match
 {
-    public class GameState : NetworkIdentity
+    public class MatchState : NetworkIdentity
     {
         public GameObject PlayerStatePrefab;
         public GameObject PlayerPrefab;

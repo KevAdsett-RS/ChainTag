@@ -12,7 +12,7 @@ namespace StateMachine.GameStates
     {
         private NetworkManager _networkManager;
 
-        private GameState _gameState;
+        private MatchState _matchState;
 
         private SceneID _loadedSceneId;
 

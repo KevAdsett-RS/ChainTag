@@ -13,7 +13,7 @@ namespace StateMachine.GameStates
 
         private bool _lobbyInitialised;
 
-        private GameState _gameState;
+        private MatchState _matchState;
 
         protected override bool UseDefaultSceneLoading() => false;
 

@@ -12,9 +12,9 @@ public class GameEndUi : StateBinder
     [SerializeField] private Color freeColour;
     
     
-    protected override void RegisterBindings(GameState gameState, List<IStateBinding> stateBindings)
+    protected override void RegisterBindings(MatchState matchState, List<IStateBinding> stateBindings)
     {
-        stateBindings.Add(new VarStateBinding<PlayerTeam>(gameState.WinningTeam, OnWinningTeamChanged));
+        stateBindings.Add(new VarStateBinding<PlayerTeam>(matchState.WinningTeam, OnWinningTeamChanged));
     }
 
     private void OnWinningTeamChanged(PlayerTeam newValue)

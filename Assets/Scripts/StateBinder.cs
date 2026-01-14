@@ -14,7 +14,7 @@ using UnityEngine;
         protected virtual void Awake()
         {
             Debug.Log($"StateBinder::Awake ({name})");
-            var gameState = FindAnyObjectByType<GameState>();
+            var gameState = FindAnyObjectByType<MatchState>();
             if (gameState && gameState.IsReady)
             {
                 OnGameStateReady();
@@ -31,14 +31,14 @@ using UnityEngine;
             Debug.Log($"StateBinder::OnGameStateReady ({name}, _isInitialised: {_isInitialised})");
             
             GameEvents.OnGameStateReady -= OnGameStateReady;
-            var gameState = FindAnyObjectByType<GameState>();
+            var gameState = FindAnyObjectByType<MatchState>();
             if (gameState)
             {
                 Initialise(gameState);
             }
         }
 
-        private void Initialise(GameState GameState)
+        private void Initialise(MatchState matchState)
         {
             Debug.Log($"StateBinder::Initialise ({name}, _isInitialised: {_isInitialised}, _alreadyEnabled: {_alreadyEnabled})");
             if (_isInitialised)
@@ -46,7 +46,7 @@ using UnityEngine;
                 return;
             }
 
-            RegisterBindings(GameState, _stateBindings);
+            RegisterBindings(matchState, _stateBindings);
             _isInitialised = true;
 
             // If we're already enabled (likely true for a client), run bindings
@@ -85,7 +85,7 @@ using UnityEngine;
             }
         }
 
-        protected abstract void RegisterBindings(GameState GameState, List<IStateBinding> stateBindings);
+        protected abstract void RegisterBindings(MatchState matchState, List<IStateBinding> stateBindings);
         
         protected virtual void OnDestroy()
         {

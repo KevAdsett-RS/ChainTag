@@ -56,10 +56,10 @@ public class LobbyUi : StateBinder
         Events.LobbyEvents.OnStartGameButtonPressed?.Invoke();
     }
     
-    protected override void RegisterBindings(GameState gameState, List<IStateBinding> stateBindings)
+    protected override void RegisterBindings(MatchState matchState, List<IStateBinding> stateBindings)
     {
-        Debug.Log($"LobbyUi::RegisterBindings {gameState}");
-        stateBindings.Add(new DictionaryStateBinding<PlayerID, PlayerState>(gameState.Players, OnPlayerListChanged));
+        Debug.Log($"LobbyUi::RegisterBindings {matchState}");
+        stateBindings.Add(new DictionaryStateBinding<PlayerID, PlayerState>(matchState.Players, OnPlayerListChanged));
     }
 
     private void OnPlayerListChanged(SyncDictionaryChange<PlayerID, PlayerState> change)
