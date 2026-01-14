@@ -131,7 +131,6 @@ namespace Match
 
         private void Update()
         {
-            return;
             if (!isServer)
             {
                 return;
