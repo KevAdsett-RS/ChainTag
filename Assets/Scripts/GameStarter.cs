@@ -1,4 +1,3 @@
-using System;
 using PurrNet;
 using UnityEngine;
 using Events;
@@ -12,12 +11,7 @@ public class GameStarter : NetworkIdentity
     private string _displayName;
     private NetworkManager _networkManager;
     private bool _asHost;
-
-    private void Awake()
-    {
-        DontDestroyOnLoad(this);
-    }
-
+    
     private void Start()
     {
         Debug.Log("GameStarter::Start");
@@ -45,35 +39,46 @@ public class GameStarter : NetworkIdentity
         {
             return;
         }
-        if (!_networkManager.isHost && !_networkManager.isClient)
+        if (!_networkManager.isClient)
         {
             return;
         }
         
         _gameState = FindAnyObjectByType<GameState>();
-        if (!_gameState || !_gameState.IsGameStateReady)
+        if (!_gameState || !_gameState.IsReady)
         {
             Debug.Log("GameStarter::StartGame: Waiting for game state to be ready");
-            GameEvents.OnGameStateReady += AddLocalPlayerState;
+            GameEvents.OnGameStateReady += Client_AddLocalPlayerState;
         }
         else
         {
             Debug.Log("GameStarter::StartGame: Game state is ready");
-            AddLocalPlayerState();
+            Client_AddLocalPlayerState();
         }
     }
 
-    private void AddLocalPlayerState()
+    [Client]
+    private void Client_AddLocalPlayerState()
     {
-        Debug.Log($"GameStarter::AddLocalPlayerState: {_uniqueDeviceId}, {_localPlayerId}, {_displayName}, {_asHost}");
+        if (!this)
+        {
+            Debug.LogError($"Trying to add local player state to {nameof(GameStarter)} when it doesn't exist.");
+            return;
+        }
+        Debug.Log($"GameStarter::Client_AddLocalPlayerState: {_uniqueDeviceId}, {_localPlayerId}, {_displayName}, {_asHost}");
         
-        GameEvents.OnGameStateReady -= AddLocalPlayerState;
+        GameEvents.OnGameStateReady -= Client_AddLocalPlayerState;
         if (!_gameState)
         {
             _gameState = FindAnyObjectByType<GameState>();
         }
-        // TODO: We're not going to _always_ want the host to be the starter for the chain team
-        _gameState.AddPlayerState(_uniqueDeviceId, _localPlayerId, _displayName, _asHost ? PlayerTeam.ChainTeam : PlayerTeam.FreeTeam);
+        if (_gameState != null && _gameState.isSpawned)
+        {
+            // TODO: We're not going to _always_ want the host to be the starter for the chain team
+            PlayerTeam starterTeam = _asHost ? PlayerTeam.ChainTeam : PlayerTeam.FreeTeam;
+            
+            _gameState.Server_AddPlayerState(_uniqueDeviceId, _localPlayerId, _displayName, starterTeam);
+        }
     }
     
 }

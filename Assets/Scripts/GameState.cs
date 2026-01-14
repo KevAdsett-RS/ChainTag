@@ -9,33 +9,36 @@ public class GameState : NetworkIdentity
     public GameObject PlayerStatePrefab;
     public GameObject PlayerPrefab;
 
-    public bool IsGameStateReady;
+    public bool IsReady;
     
     public readonly SyncVar<string> TimeRemainingString = new();
-    private readonly List<PlayerID> Server_ChainedPlayerIds = new();
-    private readonly List<PlayerID> Server_FreePlayerIds = new();
     public readonly SyncVar<int> ChainPlayerCount = new();
     public readonly SyncVar<int> FreePlayerCount = new();
     public readonly SyncDictionary<PlayerID, PlayerState> Players = new();
+    public readonly SyncVar<PlayerTeam> WinningTeam = new();
+    
+    private readonly List<PlayerID> _serverChainedPlayerIds = new();
+    private readonly List<PlayerID> _serverFreePlayerIds = new();
+    private readonly List<GameObject> _serverPlayerGameObjects = new();
 
-    private enum GameRunningState
+    private enum MatchPhase
     {
         InLobby,
         InMatch,
-        ChainVictory,
-        FreeVictory
+        MatchEnd,
     }
 
-    private GameRunningState _currentState = GameRunningState.InMatch;
+    private readonly SyncVar<MatchPhase> _currentPhase = new();
+    
+    private MatchPhase _previousPhase;
 
     private float _timeRemaining = 60f;
-
     protected override void OnSpawned()
     {
         Debug.Log("GameState::OnSpawned");
         base.OnSpawned();
         
-        IsGameStateReady = true;
+        IsReady = true;
         GameEvents.OnGameStateReady?.Invoke();
 
         if (isServer)
@@ -49,15 +52,19 @@ public class GameState : NetworkIdentity
 
     private void OnPlayerLeft(PlayerID player, bool asServer)
     {
+        Debug.Log($"GameState::OnPlayerLeft: player: {player}, asServer: {asServer}");
         if (asServer)
         {
-            Debug.Log($"GameState::OnPlayerLeft: player: {player}, asServer: {asServer}");
             Players.Remove(player);
+            if (networkManager && Players.Count == 0)
+            {
+                networkManager.StopServer();
+            }
         }
     }
 
-    [ServerRpc]
-    public void AddPlayerState(string deviceId, PlayerID playerId, string displayName, PlayerTeam team)
+    [ServerRpc(requireOwnership:false)]
+    public void Server_AddPlayerState(string deviceId, PlayerID playerId, string displayName, PlayerTeam team)
     {
         Debug.Log($"GameState::AddPlayer {playerId} - {displayName} ({team})");
         var player = Instantiate(PlayerStatePrefab, gameObject.transform);
@@ -102,6 +109,8 @@ public class GameState : NetworkIdentity
                 ? chainTeamSpawnPoint.transform.position
                 : freeTeamSpawnPoint.transform.position);
             playerController.Server_LinkState(keyValuePair.Value);
+            
+            _serverPlayerGameObjects.Add(player);
         }
     }
 
@@ -110,6 +119,11 @@ public class GameState : NetworkIdentity
         Debug.Log("GameState::OnDestroy");
         GameEvents.OnPlayerChangedTeam -= Server_OnPlayerTeamChanged;
         GameEvents.OnStartGame -= Server_OnStartGame;
+        if (networkManager)
+        {
+            networkManager.onPlayerLeft -= OnPlayerLeft;
+        }
+        
         base.OnDestroy();
     }
 
@@ -119,35 +133,64 @@ public class GameState : NetworkIdentity
         {
             return;
         }
-        switch (_currentState)
-        {
-            case GameRunningState.InLobby:
-                break;
-            case GameRunningState.InMatch:
-                
-                if (Server_FreePlayerIds.Count <= 0)
-                {
-                    // _currentState = GameRunningState.ChainVictory;
-                    // return;
-                }
-                _timeRemaining -= Time.deltaTime;
-                TimeRemainingString.value = "" + Math.Ceiling(_timeRemaining);
-                if (_timeRemaining <= 0f)
-                {
-                    if (Server_FreePlayerIds.Count > 0)
-                    {
-                        _currentState = GameRunningState.FreeVictory;
-                    }
-                }
 
-                break;
-            case GameRunningState.ChainVictory:
-                break;
-            case GameRunningState.FreeVictory:
-                break;
-            default:
-                throw new ArgumentOutOfRangeException();
+        if (_previousPhase != _currentPhase.value)
+        {
+            _previousPhase = _currentPhase.value;
+            OnPhaseChanged();
         }
+
+        if (_currentPhase.value != MatchPhase.InMatch)
+        {
+            return;
+        }
+        
+        if (_serverFreePlayerIds.Count <= 0)
+        {
+            WinningTeam.value = PlayerTeam.ChainTeam;
+            _currentPhase.value = MatchPhase.MatchEnd;
+            return;
+        }
+
+        _timeRemaining -= Time.deltaTime;
+        TimeRemainingString.value = "" + Math.Ceiling(_timeRemaining);
+        if (_timeRemaining <= 0f)
+        {
+            if (_serverFreePlayerIds.Count > 0)
+            {
+                WinningTeam.value = PlayerTeam.FreeTeam;
+                _currentPhase.value = MatchPhase.MatchEnd;
+            }
+        }
+    }
+
+    private void OnPhaseChanged()
+    {
+        Debug.Log($"GameState::OnPhaseChanged: new phase: {_currentPhase.value}");
+        switch (_currentPhase.value)
+        {
+            case MatchPhase.MatchEnd:
+                Server_OnMatchEnd();
+                break;
+            case MatchPhase.InLobby:
+            case MatchPhase.InMatch:
+            default:
+                break;
+        }
+    }
+
+    [ServerOnly]
+    private void Server_OnMatchEnd()
+    {
+        Debug.Log($"GameState::Server_RemovePlayerBodies");
+        foreach (var playerGameObject in _serverPlayerGameObjects)
+        {
+            Destroy(playerGameObject);
+        }
+
+        _serverPlayerGameObjects.Clear();
+        
+        GameEvents.OnMatchFinished?.Invoke();
     }
 
     [ServerOnly]
@@ -167,6 +210,7 @@ public class GameState : NetworkIdentity
     [ServerOnly]
     private void Server_OnPlayerTeamChanged(PlayerID playerId, PlayerTeam newTeam)
     {
+        Debug.Log($"GameState::Server_OnPlayerTeamChanged {playerId} -> {newTeam}");
         var player = Players[playerId];
         if (!player)
         {
@@ -178,24 +222,24 @@ public class GameState : NetworkIdentity
         {
             case PlayerTeam.ChainTeam:
             {
-                if (Server_ChainedPlayerIds.Count > 0)
+                if (_serverChainedPlayerIds.Count > 0)
                 {
-                    player.Server_SetLinkedPlayer(Players[Server_ChainedPlayerIds[^1]]);
+                    player.Server_SetLinkedPlayer(Players[_serverChainedPlayerIds[^1]]);
                 }
-                Server_SwapTeams(playerId, Server_FreePlayerIds, Server_ChainedPlayerIds);
+                Server_SwapTeams(playerId, _serverFreePlayerIds, _serverChainedPlayerIds);
                 break;
             }
             case PlayerTeam.FreeTeam:
             {
-                Server_SwapTeams(playerId, Server_ChainedPlayerIds, Server_FreePlayerIds);
+                Server_SwapTeams(playerId, _serverChainedPlayerIds, _serverFreePlayerIds);
                 break;
             }
             case PlayerTeam.Unset:
             default: break;
         }
 
-        ChainPlayerCount.value = Server_ChainedPlayerIds.Count;
-        FreePlayerCount.value = Server_FreePlayerIds.Count;
+        ChainPlayerCount.value = _serverChainedPlayerIds.Count;
+        FreePlayerCount.value = _serverFreePlayerIds.Count;
     }
 
     [ServerOnly]
@@ -203,5 +247,6 @@ public class GameState : NetworkIdentity
     {
         Debug.Log("GameState::Server_OnStartGame");
         Server_InstantiatePlayers();
+        _currentPhase.value = MatchPhase.InMatch;
     }
 }

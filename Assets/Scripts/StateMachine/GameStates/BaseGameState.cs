@@ -9,8 +9,11 @@ namespace StateMachine.GameStates
         protected GameStateMachine Owner { get; private set; }
         public string SceneName { get; private set; }
 
+        protected static string PersistentSceneName => "ConnectedPersistent";
+
+        private AsyncOperation _sceneLoadOperation;
         private Scene _loadedScene;
-        private bool _isReady;
+        private bool _exitPending;
 
         public void SetOwner(GameStateMachine owner)
         {
@@ -24,17 +27,18 @@ namespace StateMachine.GameStates
 
         public void Enter()
         {
-            Debug.Log($"Entering {SceneName} state");
+            Debug.Log($"BaseGameState::Enter: {SceneName}, UseDefaultSceneLoading: {UseDefaultSceneLoading()}");
             
             if (UseDefaultSceneLoading())
             {
+                SceneManager.sceneLoaded += SceneLoaded;
                 if (string.IsNullOrEmpty(SceneName))
                 {
                     Debug.LogError($"Can't enter scene that has no name set");
                 }
 
-                LoadSceneParameters parameters = new LoadSceneParameters(LoadSceneMode.Additive);
-                _loadedScene = SceneManager.LoadScene(SceneName, parameters);
+                Debug.Log($"BaseGameState::Enter: Attempting to load {SceneName} additively");
+                _sceneLoadOperation = SceneManager.LoadSceneAsync(SceneName, LoadSceneMode.Additive);
             }
             else
             {
@@ -44,40 +48,25 @@ namespace StateMachine.GameStates
 
         public void Update()
         {
-            
-            if (_loadedScene.isLoaded)
-            {
-                if (!_isReady)
-                {
-                    Debug.Log($"BaseGameState::Update: {SceneName} is now loaded...");
-                    SceneManager.SetActiveScene(_loadedScene);
-                    _isReady = true;
-                    OnSceneLoaded();
-                    if (UseDefaultSceneLoading())
-                    {
-                        OnEnter();
-                    }
-                }
-            }
             OnUpdate();
         }
 
         public void Exit()
         {
-            Debug.Log($"Exiting {SceneName} state");
-            // try
-            // {
+            Debug.Log($"BaseGameState::Exit: {SceneName}: UseDefaultSceneLoading: {UseDefaultSceneLoading()}");
             if (UseDefaultSceneLoading())
             {
-                SceneManager.UnloadSceneAsync(_loadedScene);
-                Resources.UnloadUnusedAssets();
+                if (_loadedScene.IsValid())
+                {
+                    SceneManager.UnloadSceneAsync(_loadedScene);
+                    Resources.UnloadUnusedAssets();
+                }
+                else
+                {
+                    _exitPending = true;
+                    return;
+                }
             }
-
-            // }
-            // catch (Exception e)
-            // {
-                // Debug.LogError($"BaseGameState::Exit: Error trying to exit state \"{SceneName}\": {e.Message}");
-            // }
             OnExit();
         }
         
@@ -99,9 +88,20 @@ namespace StateMachine.GameStates
             Debug.Log($"BaseGameState::OnExit: {SceneName}");
         }
 
-        protected virtual void OnSceneLoaded()
+        private void SceneLoaded(Scene scene, LoadSceneMode loadSceneMode)
         {
-            Debug.Log($"BaseGameState::OnSceneLoaded: {SceneName}");
+            Debug.Log($"BaseGameState::SceneLoaded: {scene.name}");
+
+            if (_exitPending)
+            {
+                Exit();
+                return;
+            }
+            _loadedScene = scene;
+            Debug.Log($"BaseGameState::SceneLoaded: Scene is valid: {_loadedScene.IsValid()}");
+            SceneManager.sceneLoaded -= SceneLoaded;
+            SceneManager.SetActiveScene(_loadedScene);
+            OnEnter();
         }
     }
 }

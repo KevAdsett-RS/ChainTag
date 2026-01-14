@@ -22,14 +22,8 @@ public class NakamaClient : MonoBehaviour
     
     private event Action _clientCreated;
 
-    private void Awake()
-    {
-        DontDestroyOnLoad(this);
-    }
-
     void Start()
     {
-        DontDestroyOnLoad(this);
         _client = new Client(Scheme, Host, Port, ServerKey, UnityWebRequestAdapter.Instance);
         Debug.Log("NakamaClient started");
         _clientCreated?.Invoke();

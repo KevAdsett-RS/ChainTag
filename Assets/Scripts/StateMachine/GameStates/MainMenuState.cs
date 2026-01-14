@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using PurrNet;
 using PurrNet.Transports;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
@@ -116,6 +117,8 @@ namespace StateMachine.GameStates
         private NetworkManager _networkManager;
 
         private Dictionary<string, object> _gameStartPacket = new();
+        private bool _networkStarted;
+        private PlayerID _localClientId;
 
         protected override void OnEnter()
         {
@@ -124,32 +127,42 @@ namespace StateMachine.GameStates
             
             _networkManager.onNetworkStarted += OnNetworkStarted;
             _networkManager.onLocalPlayerReceivedID += OnLocalPlayerReceivedId;
+
+            if (_networkManager.isServer)
+            {
+                _networkManager.sceneModule.UnloadSceneAsync(PersistentSceneName);
+            }
+            else if (SceneManager.GetSceneByName(PersistentSceneName).isLoaded)
+            {
+                SceneManager.UnloadSceneAsync(PersistentSceneName);
+            }
             
             Events.MainMenuEvents.OnJoinButtonPressed += OnJoin;
             Events.MainMenuEvents.OnHostButtonPressed += OnHost;
             Events.MainMenuEvents.OnUsernameEdited += OnUsernameEdited;
 
             _ui = Object.FindFirstObjectByType<MainMenuUi>();
-            if (_ui)
+            if (!_ui)
             {
-                var existingDisplayName = Owner.GetStatePacket<string>("displayName");
+                return;
+            }
+            
+            if (Owner.TryGetStatePacket("displayName", out string existingDisplayName))
+            {
                 _gameStartPacket.Add("displayName", existingDisplayName);
-                if (string.IsNullOrEmpty(existingDisplayName))
-                {
-                    _ui.SetDisplayName(_potentialNames[Random.Range(0, _potentialNames.Count)]);
-                }
-                else
-                {
-                    _ui.SetDisplayName(existingDisplayName);
-                }
+                _ui.SetDisplayName(string.IsNullOrEmpty(existingDisplayName)
+                    ? _potentialNames[Random.Range(0, _potentialNames.Count)]
+                    : existingDisplayName);
+            }
+            else
+            {
+                _ui.SetDisplayName(_potentialNames[Random.Range(0, _potentialNames.Count)]);
             }
         }
 
         protected override void OnExit()
         {
             base.OnExit();
-            _networkManager.onNetworkStarted -= OnNetworkStarted;
-            _networkManager.onLocalPlayerReceivedID -= OnLocalPlayerReceivedId;
             
             Events.MainMenuEvents.OnJoinButtonPressed -= OnJoin;
             Events.MainMenuEvents.OnHostButtonPressed -= OnHost;
@@ -158,14 +171,31 @@ namespace StateMachine.GameStates
 
         public void OnJoin()
         {
-            Debug.Log("Starting client");
+            Debug.Log("MainMenuState::OnJoin: Starting client");
             _networkManager.StartClient();
                 
         }
 
+        private void OnNetworkStarted(NetworkManager manager, bool asServer)
+        {
+            Debug.Log($"MainMenuState::OnNetworkStarted: asServer: {asServer}");
+            _networkManager.onNetworkStarted -= OnNetworkStarted;
+            _networkStarted = true;
+            GoToLobbyIfReady();
+        }
+
+        private void GoToLobbyIfReady()
+        {
+            Debug.Log($"MainMenuState::GoToLobbyIfReady: _localClientId: {_localClientId}, _networkStarted: {_networkStarted}");
+            if (_localClientId.id != 0 && _networkStarted)
+            {
+                Owner.ChangeState("LobbyState", _gameStartPacket);
+            }
+        }
+
         public void OnHost()
         {
-            Debug.Log("Starting host");
+            Debug.Log("MainMenuState::OnHost: Starting host");
             _networkManager.StartHost();
         }
 
@@ -185,17 +215,15 @@ namespace StateMachine.GameStates
             }
         }
 
-        private void OnNetworkStarted(NetworkManager manager, bool asServer)
-        {
-            Debug.Log($"MainMenuState::OnNetworkStarted, asServer: {asServer}");
-        }
-
 
         private void OnLocalPlayerReceivedId(PlayerID playerId)
         {
             Debug.Log($"MainMenuState::OnLocalPlayerReceivedId: {playerId}");
+            _localClientId = playerId;
+            _networkManager.onLocalPlayerReceivedID -= OnLocalPlayerReceivedId;
+            
             _gameStartPacket.Add("localPlayerId", playerId);
-            Owner.ChangeState("LobbyState", _gameStartPacket);
+            GoToLobbyIfReady();
         }
     }
 }

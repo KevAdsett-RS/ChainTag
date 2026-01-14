@@ -54,6 +54,10 @@ public class PlayerController : NetworkIdentity
 
     private void OnLinkedPlayerChanged(PlayerState linkedPlayer)
     {
+        if (!linkedPlayer || !this)
+        {
+            return;
+        }
         var springJoint = GetComponent<SpringJoint2D>();
         springJoint.connectedBody = linkedPlayer.Body.value.GetComponent<Rigidbody2D>();
         springJoint.enabled = true;

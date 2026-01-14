@@ -10,75 +10,51 @@ namespace StateMachine.GameStates
     {
         private NetworkManager _networkManager;
 
-        private GameState _gameState;
+        private bool _lobbyInitialised;
 
-        private const string PersistentSceneName = "ConnectedPersistent";
+        private GameState _gameState;
 
         protected override bool UseDefaultSceneLoading() => false;
 
         protected override void OnEnter()
         {
             _networkManager = Object.FindAnyObjectByType<NetworkManager>();
-            _networkManager.sceneModule.onPostSceneLoaded += OnSceneLoaded;
-            if (!_networkManager.isServer)
-            {
-                return;
-            }
-            _networkManager.sceneModule.LoadSceneAsync(PersistentSceneName);
-
             LobbyEvents.OnStartGameButtonPressed += OnStartGameButtonPressed;
-        }
-
-        protected override void OnExit()
-        {
-            if (_networkManager)
+            
+            
+            AddPlayerToGame(_networkManager.isHost);
+            
+            if (_networkManager.isServer)
             {
-                _networkManager.sceneModule.onPostSceneLoaded -= OnSceneLoaded;
-                _networkManager.sceneModule.UnloadSceneAsync(SceneName);
-            }
-            LobbyEvents.OnStartGameButtonPressed -= OnStartGameButtonPressed;
-
-            base.OnExit();
-        }
-
-        private void OnSceneLoaded(SceneID sceneId, bool asServer)
-        {
-            Debug.Log($"LobbyState::OnSceneLoaded: {sceneId}");
-            if (!_networkManager)
-            {
-                return;
-            }
-            var sceneName = _networkManager.sceneModule.sceneStates[sceneId].scene.name;
-            Debug.Log($"LobbyState::OnSceneLoaded: loaded scene: {sceneName}");
-            if (sceneName == SceneName)
-            {
-                OnLobbySceneLoaded();
-            }
-            else if (sceneName == PersistentSceneName)
-            {
-                OnPersistentSceneLoaded(asServer);
-            }
-        }
-
-        private void OnPersistentSceneLoaded(bool asServer)
-        {
-            if (asServer)
-            {
+                _networkManager.sceneModule.LoadSceneAsync(PersistentSceneName, LoadSceneMode.Additive);
                 _networkManager.sceneModule.LoadSceneAsync(SceneName, LoadSceneMode.Additive);
             }
         }
 
-        private void OnLobbySceneLoaded()
+        protected override void OnExit()
         {
-            AddPlayerToGame(_networkManager.isHost);
+            LobbyEvents.OnStartGameButtonPressed -= OnStartGameButtonPressed;
+            if (_networkManager)
+            {
+                if (_networkManager.isServer)
+                {
+                    _networkManager.sceneModule.UnloadSceneAsync(SceneName);
+                }
+            }
+
+            base.OnExit();
         }
 
         private void AddPlayerToGame(bool asHost)
         {
-            LobbyEvents.AddPlayerToGame?.Invoke(Owner.UniqueDeviceId,
-                Owner.GetStatePacket<PlayerID>("localPlayerId"),
-                Owner.GetStatePacket<string>("displayName"),
-                asHost);
+            if (Owner.TryGetStatePacket<PlayerID>("localPlayerId", out var localPlayerId) &&
+                Owner.TryGetStatePacket<string>("displayName", out var displayName))
+            {
+                LobbyEvents.AddPlayerToGame?.Invoke(Owner.UniqueDeviceId,
+                    localPlayerId,
+                    displayName,
+                    asHost);
+            }
         }
 
         private void OnStartGameButtonPressed()

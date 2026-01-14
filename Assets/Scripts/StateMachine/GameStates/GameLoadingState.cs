@@ -15,8 +15,15 @@ namespace StateMachine.GameStates
         private void RequestNakamaId()
         {
             Debug.Log($"GameLoadingState::RequestNakamaId: {Owner.UniqueDeviceId}");
-            Owner.NakamaClient.OnReady += OnNakamaClientReady;
-            Owner.NakamaClient.WaitForClient(Owner.UniqueDeviceId);
+            if (Owner.NakamaClient.IsReady)
+            {
+                OnNakamaClientReady();
+            }
+            else
+            {
+                Owner.NakamaClient.OnReady += OnNakamaClientReady;
+                Owner.NakamaClient.WaitForClient(Owner.UniqueDeviceId);
+            }
         }
 
         private void OnNakamaClientReady()

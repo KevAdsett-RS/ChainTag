@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Events;
 using PurrNet;
 using UnityEngine;
@@ -12,25 +13,32 @@ namespace StateMachine.GameStates
 
         private GameState _gameState;
 
+        private SceneID _loadedSceneId;
+
         protected override bool UseDefaultSceneLoading() => false;
 
         protected override void OnEnter()
         {
+            Debug.Log($"GameRunningState::OnEnter: {SceneName}");
             _networkManager = Object.FindAnyObjectByType<NetworkManager>();
-            _networkManager.sceneModule.onPostSceneLoaded += OnSceneLoaded;
             if (!_networkManager.isServer)
             {
                 return;
             }
+            _networkManager.sceneModule.onPostSceneLoaded += OnSceneLoaded;
             _networkManager.sceneModule.LoadSceneAsync(SceneName, LoadSceneMode.Additive);
         }
 
         protected override void OnExit()
         {
+            Debug.Log($"GameRunningState::OnExit: {SceneName}");
             if (_networkManager)
             {
-                _networkManager.sceneModule.onPostSceneLoaded -= OnSceneLoaded;
-                _networkManager.sceneModule.UnloadSceneAsync(SceneName);
+                if (_networkManager.isServer)
+                {
+                    Debug.Log($"GameRunningState::Attempting to unload: {SceneName}");
+                    _networkManager.sceneModule.UnloadSceneAsync(SceneName);
+                }
             }
 
             base.OnExit();
@@ -39,6 +47,7 @@ namespace StateMachine.GameStates
         private void OnSceneLoaded(SceneID sceneId, bool asServer)
         {
             Debug.Log($"GameRunningState::OnSceneLoaded: {SceneName}");
+            _networkManager.sceneModule.onPostSceneLoaded -= OnSceneLoaded;
             if (_networkManager.isServer)
             {
                 GameEvents.OnStartGame?.Invoke();
