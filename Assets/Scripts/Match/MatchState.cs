@@ -37,11 +37,8 @@ namespace Match
         private float _timeRemaining = 60f;
         protected override void OnSpawned()
         {
-            Debug.Log("MatchState::OnSpawned");
+            Debug.Log($"MatchState::OnSpawned: isServer: {isServer}");
             base.OnSpawned();
-    
-            IsReady = true;
-            GameEvents.OnGameStateReady?.Invoke();
 
             if (isServer)
             {
@@ -50,6 +47,9 @@ namespace Match
             }
 
             networkManager.onPlayerLeft += OnPlayerLeft;
+    
+            IsReady = true;
+            GameEvents.OnGameStateReady?.Invoke();
         }
 
         private void OnPlayerLeft(PlayerID player, bool asServer)
