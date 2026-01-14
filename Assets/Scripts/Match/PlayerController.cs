@@ -54,6 +54,7 @@ public class PlayerController : NetworkIdentity
 
     private void OnLinkedPlayerChanged(PlayerState linkedPlayer)
     {
+        Debug.LogError($"PlayerController::OnLinkedPlayerChanged: {State.Name.value} is now linked to {linkedPlayer.Name.value}");
         if (!linkedPlayer || !this)
         {
             return;

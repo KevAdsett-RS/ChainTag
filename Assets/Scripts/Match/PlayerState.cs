@@ -66,6 +66,7 @@ public class PlayerState : NetworkIdentity
     [ServerOnly]
     public void Server_SetLinkedPlayer(PlayerState player)
     {
+        Debug.Log($"PlayerState::Server_SetLinkedPlayer for {name} (Id: {PlayerId.value}) -> {player.Name.value}");
         LinkedPlayer.value = player;
     }
 }

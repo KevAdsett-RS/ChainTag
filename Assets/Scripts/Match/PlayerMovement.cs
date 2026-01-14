@@ -1,5 +1,3 @@
-
-using System;
 using Input;
 using UnityEngine;
 
@@ -11,7 +9,7 @@ public class PlayerMovement : MonoBehaviour
 
     private Rigidbody2D _rigidbody;
     private PlayerInputHandler _inputManager;
-    
+
     void Start()
     {
         _rigidbody = GetComponent<Rigidbody2D>();

@@ -10,13 +10,13 @@ public class GameState : NetworkIdentity
     public GameObject PlayerPrefab;
 
     public bool IsReady;
-    
+
     public readonly SyncVar<string> TimeRemainingString = new();
     public readonly SyncVar<int> ChainPlayerCount = new();
     public readonly SyncVar<int> FreePlayerCount = new();
     public readonly SyncDictionary<PlayerID, PlayerState> Players = new();
     public readonly SyncVar<PlayerTeam> WinningTeam = new();
-    
+
     private readonly List<PlayerID> _serverChainedPlayerIds = new();
     private readonly List<PlayerID> _serverFreePlayerIds = new();
     private readonly List<GameObject> _serverPlayerGameObjects = new();
@@ -29,7 +29,7 @@ public class GameState : NetworkIdentity
     }
 
     private readonly SyncVar<MatchPhase> _currentPhase = new();
-    
+
     private MatchPhase _previousPhase;
 
     private float _timeRemaining = 60f;
@@ -37,7 +37,7 @@ public class GameState : NetworkIdentity
     {
         Debug.Log("GameState::OnSpawned");
         base.OnSpawned();
-        
+    
         IsReady = true;
         GameEvents.OnGameStateReady?.Invoke();
 
@@ -66,13 +66,13 @@ public class GameState : NetworkIdentity
     [ServerRpc(requireOwnership:false)]
     public void Server_AddPlayerState(string deviceId, PlayerID playerId, string displayName, PlayerTeam team)
     {
-        Debug.Log($"GameState::AddPlayer {playerId} - {displayName} ({team})");
+        Debug.Log($"GameState::Server_AddPlayerState {playerId} - {displayName} ({team})");
         var player = Instantiate(PlayerStatePrefab, gameObject.transform);
         player.name = displayName + "State";
         var playerState = player.GetComponent<PlayerState>();
-        
+    
         Players.Add(playerId, playerState);
-            
+        
         playerState.GiveOwnership(playerId);
         playerState.Server_Initialise(playerId, displayName, team);
 
@@ -89,7 +89,7 @@ public class GameState : NetworkIdentity
             var player = Instantiate(PlayerPrefab);
             keyValuePair.Value.Server_SetBody(player);
             player.name = keyValuePair.Value.Name.value;
-            
+        
             Debug.Log($"GameState::Server_InstantiatePlayers: player {player.name} is on team {keyValuePair.Value.Team.value}");
 
             if (keyValuePair.Value.Team.value == PlayerTeam.ChainTeam)
@@ -102,14 +102,14 @@ public class GameState : NetworkIdentity
                 Debug.Log($"GameState::Server_InstantiatePlayers: Setting {player.name}'s position to {freeTeamSpawnPoint.transform.position}");
                 player.transform.position = freeTeamSpawnPoint.transform.position;
             }
-            
+        
             var playerController = player.GetComponent<PlayerController>();
             playerController.GiveOwnership(keyValuePair.Key);
             playerController.Server_SetInitialPosition(keyValuePair.Value.Team.value == PlayerTeam.ChainTeam
                 ? chainTeamSpawnPoint.transform.position
                 : freeTeamSpawnPoint.transform.position);
             playerController.Server_LinkState(keyValuePair.Value);
-            
+        
             _serverPlayerGameObjects.Add(player);
         }
     }
@@ -123,12 +123,13 @@ public class GameState : NetworkIdentity
         {
             networkManager.onPlayerLeft -= OnPlayerLeft;
         }
-        
+    
         base.OnDestroy();
     }
 
     private void Update()
     {
+        return;
         if (!isServer)
         {
             return;
@@ -144,7 +145,7 @@ public class GameState : NetworkIdentity
         {
             return;
         }
-        
+    
         if (_serverFreePlayerIds.Count <= 0)
         {
             WinningTeam.value = PlayerTeam.ChainTeam;
@@ -189,7 +190,7 @@ public class GameState : NetworkIdentity
         }
 
         _serverPlayerGameObjects.Clear();
-        
+    
         GameEvents.OnMatchFinished?.Invoke();
     }
 
@@ -200,13 +201,13 @@ public class GameState : NetworkIdentity
         {
             from.Remove(playerId);
         }
-                
+            
         if (to.Contains(playerId) == false)
         {
             to.Add(playerId);
         }
     }
-    
+
     [ServerOnly]
     private void Server_OnPlayerTeamChanged(PlayerID playerId, PlayerTeam newTeam)
     {
