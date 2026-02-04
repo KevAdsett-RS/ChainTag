@@ -101,10 +101,7 @@ public class LobbyUi : StateBinder
 
     private void AddPlayerEntry(SyncDictionaryChange<PlayerID, PlayerState> change)
     {
-        Debug.Log($"LobbyUi::AddPlayerEntry: key: {change.key}");
-        Debug.Log($"LobbyUi::AddPlayerEntry: value: {change.value}");
-        Debug.Log($"LobbyUi::AddPlayerEntry: playerListEntryPrefab: {playerListEntryPrefab}");
-        Debug.Log($"LobbyUi::AddPlayerEntry: playerListContainer: {playerListContainer} ");
+        Debug.Log($"LobbyUi::AddPlayerEntry: key: {change.key.id},  value: {change.value.Name.value}");
         PlayerID playerKey = change.key;
         if (_nameChangeHandlers.ContainsKey(playerKey))
         {

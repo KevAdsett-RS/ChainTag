@@ -5,7 +5,7 @@ using Match;
 using TMPro;
 using UnityEngine;
 
-public class GameEndUi : StateBinder
+public class MatchEndUi : StateBinder
 {
     [SerializeField] private TMP_Text ChainPlayerCount;
     [SerializeField] private Color chainColour;
@@ -17,9 +17,16 @@ public class GameEndUi : StateBinder
         stateBindings.Add(new VarStateBinding<PlayerTeam>(matchState.WinningTeam, OnWinningTeamChanged));
     }
 
+    protected override void OnDestroy()
+    {
+        Debug.Log($"MatchEndUi::OnDestroy");
+        MatchEvents.MatchEndUiDestroyed?.Invoke();
+        base.OnDestroy();
+    }
+
     private void OnWinningTeamChanged(PlayerTeam newValue)
     {
-        Debug.Log($"GameEndUi::OnWinningTeamChanged: {newValue}");
+        Debug.Log($"MatchEndUi::OnWinningTeamChanged: {newValue}");
         switch (newValue)
         {
             case PlayerTeam.ChainTeam:
@@ -40,7 +47,7 @@ public class GameEndUi : StateBinder
 
     public void OnLeaveButtonPressed()
     {
-        Debug.Log($"GameEndUi::OnLeaveButtonPressed");
-        GameEvents.OnLeaveGamePressed?.Invoke();
+        Debug.Log($"MatchEndUi::OnLeaveButtonPressed");
+        MatchEvents.OnLeaveMatchPressed?.Invoke();
     }
 }

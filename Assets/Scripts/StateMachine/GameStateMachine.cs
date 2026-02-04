@@ -1,11 +1,8 @@
 using System;
 using System.Collections.Generic;
-using Events;
 using ParrelSync;
 using StateMachine.GameStates;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace StateMachine
 {
@@ -21,13 +18,10 @@ namespace StateMachine
         private BaseGameState _currentState;
         private readonly Dictionary<string, object> _statePackets = new();
 
-
         private void Awake()
         {
             Debug.Log($"GameStateMachine::Awake:");
             InitialiseNakama();
-
-            GameEvents.OnMatchFinished += OnMatchFinished;
             
             if (Definition.States.Count == 0)
             {
@@ -39,14 +33,17 @@ namespace StateMachine
 
         private void OnDestroy()
         {
-            GameEvents.OnMatchFinished -= OnMatchFinished;
-            
             _currentState?.Exit();
         }
 
-        private void OnMatchFinished()
+        public void Next(Dictionary<string, object> statePackets = null)
         {
-            ChangeState("GameEndState");
+            var index = Definition.States.FindIndex(definition => definition.StateClassName == currentStateKey);
+            if (index == Definition.States.Count - 1)
+            {
+                return;
+            }
+            ChangeState(Definition.States[index + 1].StateClassName, statePackets);
         }
 
         public void ChangeState(string stateKey, Dictionary<string, object> statePackets = null)
@@ -87,7 +84,6 @@ namespace StateMachine
                 stateInstance.SetSceneName(stateDefinition.SceneName);
                 _currentState = stateInstance;
                 currentStateKey = stateDefinition.StateClassName;
-                GameEvents.OnGameStateChanged?.Invoke(currentStateKey);
             }
             else
             {

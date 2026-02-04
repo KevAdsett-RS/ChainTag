@@ -17,20 +17,20 @@ using UnityEngine;
             var gameState = FindAnyObjectByType<MatchState>();
             if (gameState && gameState.IsReady)
             {
-                OnGameStateReady();
+                OnMatchStateReady();
             }
             else
             {
-                GameEvents.OnGameStateReady += OnGameStateReady;
+                MatchEvents.OnMatchStateReady += OnMatchStateReady;
             }
             Debug.Log(gameState ? $"{this} Found game state object" : $"{this} couldn't find game state object.");
         }
 
-        private void OnGameStateReady()
+        private void OnMatchStateReady()
         {
-            Debug.Log($"StateBinder::OnGameStateReady ({name}, _isInitialised: {_isInitialised})");
+            Debug.Log($"StateBinder::OnMatchStateReady ({name}, _isInitialised: {_isInitialised})");
             
-            GameEvents.OnGameStateReady -= OnGameStateReady;
+            MatchEvents.OnMatchStateReady -= OnMatchStateReady;
             var gameState = FindAnyObjectByType<MatchState>();
             if (gameState)
             {
@@ -90,7 +90,7 @@ using UnityEngine;
         protected virtual void OnDestroy()
         {
             Debug.Log($"StateBinder::OnDestroy ({name})");
-            GameEvents.OnGameStateReady -= OnGameStateReady;
+            MatchEvents.OnMatchStateReady -= OnMatchStateReady;
         }
     }
     

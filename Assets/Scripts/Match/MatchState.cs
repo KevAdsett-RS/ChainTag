@@ -2,125 +2,100 @@ using System;
 using System.Collections.Generic;
 using Events;
 using PurrNet;
+using UnityEditor;
 using UnityEngine;
 
 namespace Match
 {
     public class MatchState : NetworkIdentity
     {
-        public GameObject PlayerStatePrefab;
-        public GameObject PlayerPrefab;
-
+        public GameObject playerStatePrefab;
+        private struct PendingPlayerData
+        {
+            public string uniqueDeviceId;
+            public PlayerID localPlayerId;
+            public string displayName;
+            public bool asHost;
+        }
+        
         public bool IsReady;
+        public GUID Guid { get; private set; }
 
         public readonly SyncVar<string> TimeRemainingString = new();
         public readonly SyncVar<int> ChainPlayerCount = new();
         public readonly SyncVar<int> FreePlayerCount = new();
         public readonly SyncDictionary<PlayerID, PlayerState> Players = new();
         public readonly SyncVar<PlayerTeam> WinningTeam = new();
-
+        
         private readonly List<PlayerID> _serverChainedPlayerIds = new();
         private readonly List<PlayerID> _serverFreePlayerIds = new();
-        private readonly List<GameObject> _serverPlayerGameObjects = new();
+        
+        private PendingPlayerData _pendingPlayer;
+        private bool _hasPendingPlayer;
 
-        private enum MatchPhase
+        private void Awake()
         {
-            InLobby,
-            InMatch,
-            MatchEnd,
+            LobbyEvents.AddPlayerToGame += Client_OnAddPlayerToGame;
+            MatchEvents.OnPlayerChangedTeam += Server_OnPlayerTeamChanged;
+            
+            Guid = GUID.Generate();
+            Debug.Log($"MatchState_{Guid}::Awake");
         }
 
-        private readonly SyncVar<MatchPhase> _currentPhase = new();
+        [Client]
+        public void Client_OnAddPlayerToGame(string uniqueDeviceId, PlayerID localPlayerId, string displayName, bool asHost)
+        {
+            Debug.Log($"MatchState_{Guid}::Client_OnAddPlayerToGame {localPlayerId}: {displayName}");
 
-        private MatchPhase _previousPhase;
+            _pendingPlayer = new PendingPlayerData
+            {
+                uniqueDeviceId = uniqueDeviceId,
+                localPlayerId = localPlayerId,
+                displayName = displayName,
+                asHost = asHost
+            };
+            _hasPendingPlayer = true;
+            if (IsReady)
+            {
+                Client_AddLocalPlayerState();
+            }
+        }
 
-        private float _timeRemaining = 60f;
         protected override void OnSpawned()
         {
-            Debug.Log($"MatchState::OnSpawned: isServer: {isServer}");
+            Debug.Log($"MatchState_{Guid}::OnSpawned: isServer: {isServer}");
             base.OnSpawned();
-
-            if (isServer)
-            {
-                GameEvents.OnStartGame += Server_OnStartGame;
-                GameEvents.OnPlayerChangedTeam += Server_OnPlayerTeamChanged;
-            }
 
             networkManager.onPlayerLeft += OnPlayerLeft;
     
             IsReady = true;
-            GameEvents.OnGameStateReady?.Invoke();
+            MatchEvents.OnMatchStateReady?.Invoke();
+            if (_hasPendingPlayer)
+            {
+                Client_AddLocalPlayerState();
+            }
         }
 
         private void OnPlayerLeft(PlayerID player, bool asServer)
         {
-            Debug.Log($"MatchState::OnPlayerLeft: player: {player}, asServer: {asServer}");
-            if (asServer)
+            Debug.Log($"MatchState_{Guid}::OnPlayerLeft: player: {player}, asServer: {asServer}");
+            if (!asServer)
             {
-                Players.Remove(player);
-                if (networkManager && Players.Count == 0)
-                {
-                    networkManager.StopServer();
-                }
+                return;
             }
-        }
-
-        [ServerRpc(requireOwnership:false)]
-        public void Server_AddPlayerState(string deviceId, PlayerID playerId, string displayName, PlayerTeam team)
-        {
-            Debug.Log($"MatchState::Server_AddPlayerState {playerId} - {displayName} ({team})");
-            var player = Instantiate(PlayerStatePrefab, gameObject.transform);
-            player.name = displayName + "State";
-            var playerState = player.GetComponent<PlayerState>();
-    
-            Players.Add(playerId, playerState);
-        
-            playerState.GiveOwnership(playerId);
-            playerState.Server_Initialise(playerId, displayName, team);
-
-        }
-
-        [ServerOnly]
-        public void Server_InstantiatePlayers()
-        {
-            var chainTeamSpawnPoint = GameObject.Find("ChainTeamSpawnPoint");
-            var freeTeamSpawnPoint = GameObject.Find("FreeTeamSpawnPoint");
-            Debug.Log("MatchState::Server_InstantiatePlayers");
-            foreach (var keyValuePair in Players)
+            Players.Remove(player);
+            if (networkManager && Players.Count == 0)
             {
-                var player = Instantiate(PlayerPrefab);
-                keyValuePair.Value.Server_SetBody(player);
-                player.name = keyValuePair.Value.Name.value;
-        
-                Debug.Log($"MatchState::Server_InstantiatePlayers: player {player.name} is on team {keyValuePair.Value.Team.value}");
-
-                if (keyValuePair.Value.Team.value == PlayerTeam.ChainTeam)
-                {
-                    Debug.Log($"MatchState::Server_InstantiatePlayers: Setting {player.name}'s position to {chainTeamSpawnPoint.transform.position}");
-                    player.transform.position = chainTeamSpawnPoint.transform.position;
-                }
-                else
-                {
-                    Debug.Log($"MatchState::Server_InstantiatePlayers: Setting {player.name}'s position to {freeTeamSpawnPoint.transform.position}");
-                    player.transform.position = freeTeamSpawnPoint.transform.position;
-                }
-        
-                var playerController = player.GetComponent<PlayerController>();
-                playerController.GiveOwnership(keyValuePair.Key);
-                playerController.Server_SetInitialPosition(keyValuePair.Value.Team.value == PlayerTeam.ChainTeam
-                    ? chainTeamSpawnPoint.transform.position
-                    : freeTeamSpawnPoint.transform.position);
-                playerController.Server_LinkState(keyValuePair.Value);
-        
-                _serverPlayerGameObjects.Add(player);
+                networkManager.StopServer();
             }
         }
 
         protected override void OnDestroy()
         {
-            Debug.Log("MatchState::OnDestroy");
-            GameEvents.OnPlayerChangedTeam -= Server_OnPlayerTeamChanged;
-            GameEvents.OnStartGame -= Server_OnStartGame;
+            Debug.Log($"MatchState_{Guid}::OnDestroy");
+            LobbyEvents.AddPlayerToGame -= Client_OnAddPlayerToGame;
+            MatchEvents.OnPlayerChangedTeam -= Server_OnPlayerTeamChanged;
+            
             if (networkManager)
             {
                 networkManager.onPlayerLeft -= OnPlayerLeft;
@@ -129,71 +104,41 @@ namespace Match
             base.OnDestroy();
         }
 
-        private void Update()
+        [Client]
+        private void Client_AddLocalPlayerState()
         {
-            if (!isServer)
+            if (!this)
             {
+                Debug.LogError($"Trying to add local player state to MatchState when MatchState_{Guid} no longer exists.");
                 return;
             }
 
-            if (_previousPhase != _currentPhase.value)
-            {
-                _previousPhase = _currentPhase.value;
-                OnPhaseChanged();
-            }
+            // TODO: We're not going to _always_ want the host to be the starter for the chain team
+            PlayerTeam starterTeam = _pendingPlayer.asHost ? PlayerTeam.ChainTeam : PlayerTeam.FreeTeam;
 
-            if (_currentPhase.value != MatchPhase.InMatch)
-            {
-                return;
-            }
+            Debug.Log($"MatchState_{Guid}::Client_AddLocalPlayerState: {starterTeam}, name: {_pendingPlayer.displayName}, id: {_pendingPlayer.localPlayerId.id}");
+            Server_AddPlayerState(
+                _pendingPlayer.uniqueDeviceId,
+                _pendingPlayer.localPlayerId,
+                _pendingPlayer.displayName, 
+                starterTeam);
+        }
+
+        [ServerRpc(requireOwnership:false)]
+        public void Server_AddPlayerState(string deviceId, PlayerID playerId, string displayName, PlayerTeam team)
+        {
+            Debug.Log($"MatchState_{Guid}::Server_AddPlayerState {playerId.id} - {displayName} ({team})");
+            var player = Instantiate(playerStatePrefab, gameObject.transform);
+            player.name = displayName + "State";
+            var playerState = player.GetComponent<PlayerState>();
     
-            if (_serverFreePlayerIds.Count <= 0)
-            {
-                WinningTeam.value = PlayerTeam.ChainTeam;
-                _currentPhase.value = MatchPhase.MatchEnd;
-                return;
-            }
-
-            _timeRemaining -= Time.deltaTime;
-            TimeRemainingString.value = "" + Math.Ceiling(_timeRemaining);
-            if (_timeRemaining <= 0f)
-            {
-                if (_serverFreePlayerIds.Count > 0)
-                {
-                    WinningTeam.value = PlayerTeam.FreeTeam;
-                    _currentPhase.value = MatchPhase.MatchEnd;
-                }
-            }
+            Players.Add(playerId, playerState);
+        
+            playerState.GiveOwnership(playerId);
+            playerState.Server_Initialise(playerId, displayName, team);
         }
-
-        private void OnPhaseChanged()
-        {
-            Debug.Log($"MatchState::OnPhaseChanged: new phase: {_currentPhase.value}");
-            switch (_currentPhase.value)
-            {
-                case MatchPhase.MatchEnd:
-                    Server_OnMatchEnd();
-                    break;
-                case MatchPhase.InLobby:
-                case MatchPhase.InMatch:
-                default:
-                    break;
-            }
-        }
-
-        [ServerOnly]
-        private void Server_OnMatchEnd()
-        {
-            Debug.Log($"MatchState::Server_RemovePlayerBodies");
-            foreach (var playerGameObject in _serverPlayerGameObjects)
-            {
-                Destroy(playerGameObject);
-            }
-
-            _serverPlayerGameObjects.Clear();
-    
-            GameEvents.OnMatchFinished?.Invoke();
-        }
+        
+        
 
         [ServerOnly]
         private void Server_SwapTeams(PlayerID playerId, List<PlayerID> from, List<PlayerID> to)
@@ -208,11 +153,11 @@ namespace Match
                 to.Add(playerId);
             }
         }
-
+        
         [ServerOnly]
         private void Server_OnPlayerTeamChanged(PlayerID playerId, PlayerTeam newTeam)
         {
-            Debug.Log($"MatchState::Server_OnPlayerTeamChanged {playerId} -> {newTeam}");
+            Debug.Log($"MatchState_{Guid}::Server_OnPlayerTeamChanged {playerId} -> {newTeam} (Match state guid: {Guid})");
             var player = Players[playerId];
             if (!player)
             {
@@ -242,14 +187,6 @@ namespace Match
 
             ChainPlayerCount.value = _serverChainedPlayerIds.Count;
             FreePlayerCount.value = _serverFreePlayerIds.Count;
-        }
-
-        [ServerOnly]
-        private void Server_OnStartGame()
-        {
-            Debug.Log("MatchState::Server_OnStartGame");
-            Server_InstantiatePlayers();
-            _currentPhase.value = MatchPhase.InMatch;
         }
     }
 }

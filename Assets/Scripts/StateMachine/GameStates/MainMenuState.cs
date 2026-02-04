@@ -189,7 +189,7 @@ namespace StateMachine.GameStates
             Debug.Log($"MainMenuState::GoToLobbyIfReady: _localClientId: {_localClientId}, _networkStarted: {_networkStarted}");
             if (_localClientId.id != 0 && _networkStarted)
             {
-                Owner.ChangeState("LobbyState", _gameStartPacket);
+                Owner.Next(_gameStartPacket);
             }
         }
 

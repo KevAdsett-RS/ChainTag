@@ -59,7 +59,7 @@ namespace Match
         {
             Debug.Log($"PlayerState::Server_ChangeTeam for {name} (Id: {PlayerId.value}) -> {newTeam}");
             Team.value = newTeam;
-            GameEvents.OnPlayerChangedTeam?.Invoke(PlayerId.value, newTeam);
+            MatchEvents.OnPlayerChangedTeam?.Invoke(PlayerId.value, newTeam);
         }
 
         [ServerOnly]

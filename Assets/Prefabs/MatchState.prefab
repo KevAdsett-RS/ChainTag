@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 449899153121639009}
   - component: {fileID: -5426472854738889741}
   m_Layer: 0
-  m_Name: GameState
+  m_Name: MatchState
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -54,9 +54,8 @@ MonoBehaviour:
   _directChildren: []
   _networkRules: {fileID: 0}
   _visitiblityRules: {fileID: 0}
-  PlayerStatePrefab: {fileID: 7257019490087854756, guid: a34de89d1fdf1a34fb376fdf6580bd6a, type: 3}
-  PlayerPrefab: {fileID: 8531123005148006924, guid: 2e92141f1041cca498eb3476268d214a, type: 3}
-  IsGameStateReady: 0
+  playerStatePrefab: {fileID: 7257019490087854756, guid: a34de89d1fdf1a34fb376fdf6580bd6a, type: 3}
+  IsReady: 0
 --- !u!114 &-5426472854738889741
 MonoBehaviour:
   m_ObjectHideFlags: 0

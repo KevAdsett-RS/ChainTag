@@ -10,6 +10,8 @@ namespace StateMachine.GameStates
         public string SceneName { get; private set; }
 
         protected static string PersistentSceneName => "ConnectedPersistent";
+        
+        protected virtual Scene LoadedScene => _loadedScene;
 
         private AsyncOperation _sceneLoadOperation;
         private Scene _loadedScene;
@@ -56,9 +58,9 @@ namespace StateMachine.GameStates
             Debug.Log($"BaseGameState::Exit: {SceneName}: UseDefaultSceneLoading: {UseDefaultSceneLoading()}");
             if (UseDefaultSceneLoading())
             {
-                if (_loadedScene.IsValid())
+                if (LoadedScene.IsValid())
                 {
-                    SceneManager.UnloadSceneAsync(_loadedScene);
+                    SceneManager.UnloadSceneAsync(LoadedScene);
                     Resources.UnloadUnusedAssets();
                 }
                 else
@@ -98,7 +100,7 @@ namespace StateMachine.GameStates
                 return;
             }
             _loadedScene = scene;
-            Debug.Log($"BaseGameState::SceneLoaded: Scene is valid: {_loadedScene.IsValid()}");
+            Debug.Log($"BaseGameState::SceneLoaded: Scene is valid: {_loadedScene.IsValid()}, isLoaded: {_loadedScene.isLoaded}");
             SceneManager.sceneLoaded -= SceneLoaded;
             SceneManager.SetActiveScene(_loadedScene);
             OnEnter();
