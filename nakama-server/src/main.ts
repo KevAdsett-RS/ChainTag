@@ -129,6 +129,7 @@ function getOrCreateMatch(
 
   // 3. Otherwise, create a new one (acting as the host)
   const label = JSON.stringify({ host_ip: payload })
+  logger.info('Label for new match created: %s', label)
   const matchId = nk.matchCreate('chain_tag', { label: label })
 
   logger.info('No match found. Created new match: %s', matchId)

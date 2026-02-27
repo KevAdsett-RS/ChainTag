@@ -55,18 +55,23 @@ namespace StateMachine.GameStates
 
         public void Exit()
         {
+            Debug.Log($"BaseGameState::Exit: {SceneName}: UseDefaultSceneLoading: {UseDefaultSceneLoading()}. Triggered by {new System.Diagnostics.StackTrace().GetFrame(1).GetMethod().Name}");
+            // If OnDestroy triggered this, but we're still loading, 
+            // it's likely a race condition during scene transitions.
+            if (_sceneLoadOperation != null && !_sceneLoadOperation.isDone)
+            {
+                Debug.LogWarning($"BaseGameState::Exit ignored for {SceneName} because scene is still loading.");
+                _exitPending = true; 
+                return;
+            }
+
             Debug.Log($"BaseGameState::Exit: {SceneName}: UseDefaultSceneLoading: {UseDefaultSceneLoading()}");
+    
             if (UseDefaultSceneLoading())
             {
-                if (LoadedScene.IsValid())
+                if (LoadedScene.IsValid() && LoadedScene.isLoaded)
                 {
                     SceneManager.UnloadSceneAsync(LoadedScene);
-                    Resources.UnloadUnusedAssets();
-                }
-                else
-                {
-                    _exitPending = true;
-                    return;
                 }
             }
             OnExit();

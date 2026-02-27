@@ -187,7 +187,7 @@ namespace StateMachine.GameStates
         
         public async void OnStartGame()
         {
-            var myIp = "127.0.0.1"; // Or your public IP
+            var myIp = await Owner.NakamaClient.GetMyPublicIP();
             var matchId = await Owner.NakamaClient.EnterGame(myIp);
 
             if (string.IsNullOrEmpty(matchId))

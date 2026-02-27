@@ -1,4 +1,5 @@
 using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -123,6 +124,24 @@ namespace Nakama
                 Debug.LogError($"Failed to enter game: {e.Message}");
                 return null;
             }
+        }
+        public async Task<string> GetMyPublicIP()
+        {
+            var client = new HttpClient();
+            
+            try
+            {
+                // Simple GET request to a public IP service
+                var ip = await client.GetStringAsync("https://api.ipify.org");
+                Debug.Log($"Public IP: {ip}");
+                return ip;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Failed to get Public IP: {e.Message}");
+                return "127.0.0.1"; // Fallback to local for testing
+            }
+        
         }
     }
 }

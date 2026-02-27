@@ -53,6 +53,7 @@ function getOrCreateMatch(ctx, logger, nk, payload) {
     }
     // 3. Otherwise, create a new one (acting as the host)
     var label = JSON.stringify({ host_ip: payload });
+    logger.info('Label for new match created: %s', label);
     var matchId = nk.matchCreate('chain_tag', { label: label });
     logger.info('No match found. Created new match: %s', matchId);
     return JSON.stringify({ match_id: matchId });

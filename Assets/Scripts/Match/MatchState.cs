@@ -19,7 +19,7 @@ namespace Match
         }
         
         public bool IsReady;
-        public GUID Guid { get; private set; }
+        public Guid Guid { get; private set; }
 
         public readonly SyncVar<string> TimeRemainingString = new();
         public readonly SyncVar<int> ChainPlayerCount = new();
@@ -37,8 +37,8 @@ namespace Match
         {
             LobbyEvents.AddPlayerToGame += Client_OnAddPlayerToGame;
             MatchEvents.OnPlayerChangedTeam += Server_OnPlayerTeamChanged;
-            
-            Guid = GUID.Generate();
+
+            Guid = Guid.NewGuid();
             Debug.Log($"MatchState_{Guid}::Awake");
         }
 

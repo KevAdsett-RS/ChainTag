@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Nakama;
+#if UNITY_EDITOR
 using ParrelSync;
+#endif
 using StateMachine.GameStates;
 using UnityEngine;
 

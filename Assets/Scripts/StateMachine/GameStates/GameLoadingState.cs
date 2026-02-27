@@ -35,6 +35,7 @@ namespace StateMachine.GameStates
                 Debug.Log($"GameLoadingState::OnNakamaClientReady: {Owner.UniqueDeviceId}");
                 var packet = new Dictionary<string, object> { { "displayName", Owner.NakamaClient.User.DisplayName } };
                 Owner.ChangeState("MainMenuState", packet);
+                
             }
         }
     }
