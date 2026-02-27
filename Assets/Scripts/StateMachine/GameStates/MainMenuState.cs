@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Nakama;
 using PurrNet;
 using PurrNet.Transports;
 using UnityEngine;
@@ -137,8 +138,7 @@ namespace StateMachine.GameStates
                 SceneManager.UnloadSceneAsync(PersistentSceneName);
             }
             
-            Events.MainMenuEvents.OnJoinButtonPressed += OnJoin;
-            Events.MainMenuEvents.OnHostButtonPressed += OnHost;
+            Events.MainMenuEvents.OnStartButtonPressed += OnStartGame;
             Events.MainMenuEvents.OnUsernameEdited += OnUsernameEdited;
 
             _ui = Object.FindFirstObjectByType<MainMenuUi>();
@@ -164,16 +164,8 @@ namespace StateMachine.GameStates
         {
             base.OnExit();
             
-            Events.MainMenuEvents.OnJoinButtonPressed -= OnJoin;
-            Events.MainMenuEvents.OnHostButtonPressed -= OnHost;
+            Events.MainMenuEvents.OnStartButtonPressed -= OnStartGame;
             Events.MainMenuEvents.OnUsernameEdited -= OnUsernameEdited;
-        }
-
-        public void OnJoin()
-        {
-            Debug.Log("MainMenuState::OnJoin: Starting client");
-            _networkManager.StartClient();
-                
         }
 
         private void OnNetworkStarted(NetworkManager manager, bool asServer)
@@ -192,11 +184,36 @@ namespace StateMachine.GameStates
                 Owner.Next(_gameStartPacket);
             }
         }
-
-        public void OnHost()
+        
+        public async void OnStartGame()
         {
-            Debug.Log("MainMenuState::OnHost: Starting host");
-            _networkManager.StartHost();
+            var myIp = "127.0.0.1"; // Or your public IP
+            var matchId = await Owner.NakamaClient.EnterGame(myIp);
+
+            if (string.IsNullOrEmpty(matchId))
+            {
+                return;
+            }
+            
+            // Join the Nakama Match to get the Host IP from the Label
+            var socket = await Owner.NakamaClient.GetSocket();
+            var match = await socket.JoinMatchAsync(matchId);
+
+            if (string.IsNullOrEmpty(match.Label))
+            {
+                return;
+            }
+            
+            var labelData = JsonUtility.FromJson<MatchLabel>(match.Label);
+            
+            // If the IP in the label is MY IP, I'm the host
+            if (labelData.host_ip == myIp) {
+                _networkManager.StartHost();
+            } else {
+                // Otherwise, I'm a client connecting to that IP
+                // _networkManager.SetAddress(labelData.host_ip);
+                _networkManager.StartClient();
+            }
         }
 
         public async void OnUsernameEdited(string username)

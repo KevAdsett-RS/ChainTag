@@ -16,15 +16,11 @@ public class MainMenuUi : MonoBehaviour
         Input?.onEndEdit.RemoveListener(OnInputEdited);
     }
 
-    public void OnJoinButtonPressed()
+    public void OnStartButtonPressed()
     {
-        Events.MainMenuEvents.OnJoinButtonPressed?.Invoke();
+        Events.MainMenuEvents.OnStartButtonPressed?.Invoke();
     }
-    public void OnHostButtonPressed()
-    {
-        Events.MainMenuEvents.OnHostButtonPressed?.Invoke();
-    }
-
+    
     public void SetDisplayName(string displayName)
     {
         Debug.Log($"MainMenuUi::SetDisplayName: {displayName}");

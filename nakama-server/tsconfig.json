@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES5",
+    "module": "amd",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "outFile": "../modules/index.js",
+    "typeRoots": ["./node_modules"],
+    "types": ["nakama-runtime"]
+  },
+  "include": ["src/**/*"]
+}

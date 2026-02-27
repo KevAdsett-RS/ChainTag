@@ -1,4 +1,5 @@
 using Events;
+using Nakama;
 #if UNITY_EDITOR
 using ParrelSync;
 #endif
