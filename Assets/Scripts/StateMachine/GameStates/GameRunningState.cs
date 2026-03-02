@@ -11,8 +11,6 @@ namespace StateMachine.GameStates
 {
     public class GameRunningState : BaseGameState
     {
-        protected override Scene LoadedScene => _loadedScene;
-        
         private NetworkManager _networkManager;
 
         private MatchState _matchState;

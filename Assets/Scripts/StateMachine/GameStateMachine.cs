@@ -49,7 +49,7 @@ namespace StateMachine
             ChangeState(Definition.States[index + 1].StateClassName, statePackets);
         }
 
-        public void ChangeState(string stateKey, Dictionary<string, object> statePackets = null)
+        public async void ChangeState(string stateKey, Dictionary<string, object> statePackets = null)
         {
             if (_currentState?.GetType().Name == stateKey)
             {
@@ -60,41 +60,32 @@ namespace StateMachine
             var stateDefinition = Definition.States.Find((definition => definition.StateClassName == stateKey));
             if (!stateDefinition)
             {
-                Debug.LogError($"GameStateMachine::ChangeState: couldn't find definition for state {stateKey}");
-                return;
+                throw new Exception($"GameStateMachine::ChangeState: couldn't find definition for state {stateKey}");
             }
             Debug.Log($"GameStateMachine::ChangeState: ChangingState{fromString} to {stateDefinition.SceneName}");
 
-            _currentState?.Exit();
+            if (_currentState != null)
+            {
+                await _currentState.Exit();
+            }
 
             if (statePackets != null)
             {
                 foreach (var item in statePackets)
                 {
-                    if (_statePackets.TryAdd(item.Key, item.Value) == false)
-                    {
-                        _statePackets[item.Key] = item.Value;
-                    }
+                    _statePackets[item.Key] = item.Value;
                 }
             }
 
             var stateType = Type.GetType($"StateMachine.GameStates.{stateKey}");
-                
-            if (stateType != null && typeof(BaseGameState).IsAssignableFrom(stateType))
-            {
-                var stateInstance = (BaseGameState)Activator.CreateInstance(stateType);
-                stateInstance.SetOwner(this);
-                stateInstance.SetSceneName(stateDefinition.SceneName);
-                _currentState = stateInstance;
-                currentStateKey = stateDefinition.StateClassName;
-            }
-            else
-            {
-                Debug.LogError($"GameStateMachine::Awake: Could not find or instantiate state class named '{stateKey}'. Ensure it's a valid BaseState subclass with a parameterless constructor.");
-                return;
-            }
+            var stateInstance = (BaseGameState)Activator.CreateInstance(stateType);
+            stateInstance.SetOwner(this);
+            stateInstance.SetSceneName(stateDefinition.SceneName);
+            
+            _currentState = stateInstance;
+            currentStateKey = stateDefinition.StateClassName;
 
-            _currentState.Enter();
+            await _currentState.Enter();
         }
 
         public bool TryGetStatePacket<T>(string key, out T value)

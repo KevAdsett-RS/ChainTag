@@ -123,24 +123,6 @@ namespace StateMachine.GameStates
 
         protected override void OnEnter()
         {
-            base.OnEnter();
-            _networkManager = Object.FindFirstObjectByType<NetworkManager>();
-            
-            _networkManager.onNetworkStarted += OnNetworkStarted;
-            _networkManager.onLocalPlayerReceivedID += OnLocalPlayerReceivedId;
-
-            if (_networkManager.isServer)
-            {
-                _networkManager.sceneModule.UnloadSceneAsync(PersistentSceneName);
-            }
-            else if (SceneManager.GetSceneByName(PersistentSceneName).isLoaded)
-            {
-                SceneManager.UnloadSceneAsync(PersistentSceneName);
-            }
-            
-            Events.MainMenuEvents.OnStartButtonPressed += OnStartGame;
-            Events.MainMenuEvents.OnUsernameEdited += OnUsernameEdited;
-
             _ui = Object.FindFirstObjectByType<MainMenuUi>();
             if (!_ui)
             {
@@ -158,6 +140,13 @@ namespace StateMachine.GameStates
             {
                 _ui.SetDisplayName(_potentialNames[Random.Range(0, _potentialNames.Count)]);
             }
+            _networkManager = Object.FindFirstObjectByType<NetworkManager>();
+            
+            _networkManager.onNetworkStarted += OnNetworkStarted;
+            _networkManager.onLocalPlayerReceivedID += OnLocalPlayerReceivedId;
+            
+            Events.MainMenuEvents.OnStartButtonPressed += OnStartGame;
+            Events.MainMenuEvents.OnUsernameEdited += OnUsernameEdited;
         }
 
         protected override void OnExit()

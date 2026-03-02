@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -8,44 +9,31 @@ namespace StateMachine.GameStates
     {
         protected GameStateMachine Owner { get; private set; }
         public string SceneName { get; private set; }
-
-        protected static string PersistentSceneName => "ConnectedPersistent";
         
-        protected virtual Scene LoadedScene => _loadedScene;
+        private TaskCompletionSource<bool> _sceneLoadTcs;
 
-        private AsyncOperation _sceneLoadOperation;
-        private Scene _loadedScene;
-        private bool _exitPending;
+        public void SetOwner(GameStateMachine owner) => Owner = owner;
+        public void SetSceneName(string sceneName) => SceneName = sceneName;
 
-        public void SetOwner(GameStateMachine owner)
-        {
-            Owner = owner;
-        }
-
-        public void SetSceneName(string sceneName)
-        {
-            SceneName = sceneName;
-        }
-
-        public void Enter()
+        public async Task Enter()
         {
             Debug.Log($"BaseGameState::Enter: {SceneName}, UseDefaultSceneLoading: {UseDefaultSceneLoading()}");
             
             if (UseDefaultSceneLoading())
             {
-                SceneManager.sceneLoaded += SceneLoaded;
+                _sceneLoadTcs = new TaskCompletionSource<bool>();
+                SceneManager.sceneLoaded += SceneLoadedInternal;
                 if (string.IsNullOrEmpty(SceneName))
                 {
-                    Debug.LogError($"Can't enter scene that has no name set");
+                    throw new Exception("Can't enter scene that has no name set");
                 }
 
                 Debug.Log($"BaseGameState::Enter: Attempting to load {SceneName} additively");
-                _sceneLoadOperation = SceneManager.LoadSceneAsync(SceneName, LoadSceneMode.Additive);
+                SceneManager.LoadSceneAsync(SceneName, LoadSceneMode.Additive);
+                await _sceneLoadTcs.Task;
             }
-            else
-            {
-                OnEnter();
-            }
+            
+            OnEnter();
         }
 
         public void Update()
@@ -53,62 +41,39 @@ namespace StateMachine.GameStates
             OnUpdate();
         }
 
-        public void Exit()
+        public async Task Exit()
         {
             Debug.Log($"BaseGameState::Exit: {SceneName}: UseDefaultSceneLoading: {UseDefaultSceneLoading()}. Triggered by {new System.Diagnostics.StackTrace().GetFrame(1).GetMethod().Name}");
-            // If OnDestroy triggered this, but we're still loading, 
-            // it's likely a race condition during scene transitions.
-            if (_sceneLoadOperation != null && !_sceneLoadOperation.isDone)
-            {
-                Debug.LogWarning($"BaseGameState::Exit ignored for {SceneName} because scene is still loading.");
-                _exitPending = true; 
-                return;
-            }
-
-            Debug.Log($"BaseGameState::Exit: {SceneName}: UseDefaultSceneLoading: {UseDefaultSceneLoading()}");
-    
+            OnExit();
             if (UseDefaultSceneLoading())
             {
-                if (LoadedScene.IsValid() && LoadedScene.isLoaded)
+                var scene = SceneManager.GetSceneByName(SceneName);
+                if (scene.IsValid() && scene.isLoaded)
                 {
-                    SceneManager.UnloadSceneAsync(LoadedScene);
+                    var op = SceneManager.UnloadSceneAsync(scene);
+                    while (op is { isDone: false })
+                    {
+                        await Task.Yield();
+                    }
                 }
             }
-            OnExit();
-        }
-        
-        protected virtual bool UseDefaultSceneLoading()
-        {
-            return true;
-        }
-        protected virtual void OnEnter()
-        {
-            Debug.Log($"BaseGameState::OnEnter: {SceneName}");
         }
 
-        protected virtual void OnUpdate()
+        private void SceneLoadedInternal(Scene scene, LoadSceneMode loadSceneMode)
         {
-        }
-
-        protected virtual void OnExit()
-        {
-            Debug.Log($"BaseGameState::OnExit: {SceneName}");
-        }
-
-        private void SceneLoaded(Scene scene, LoadSceneMode loadSceneMode)
-        {
-            Debug.Log($"BaseGameState::SceneLoaded: {scene.name}");
-
-            if (_exitPending)
+            Debug.Log($"BaseGameState::SceneLoadedInternal: {scene.name} - Scene is valid: {scene.IsValid()}, isLoaded: {scene.isLoaded}");
+            if (scene.name != SceneName)
             {
-                Exit();
                 return;
             }
-            _loadedScene = scene;
-            Debug.Log($"BaseGameState::SceneLoaded: Scene is valid: {_loadedScene.IsValid()}, isLoaded: {_loadedScene.isLoaded}");
-            SceneManager.sceneLoaded -= SceneLoaded;
-            SceneManager.SetActiveScene(_loadedScene);
-            OnEnter();
+            SceneManager.sceneLoaded -= SceneLoadedInternal;
+            SceneManager.SetActiveScene(scene);
+            _sceneLoadTcs.SetResult(true);
         }
+
+        protected virtual bool UseDefaultSceneLoading() => true;
+        protected virtual void OnEnter() {}
+        protected virtual void OnUpdate() {}
+        protected virtual void OnExit() {}
     }
 }
